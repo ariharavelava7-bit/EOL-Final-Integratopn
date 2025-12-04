@@ -1,0 +1,114 @@
+============================================================
+✓ SIMPLIFIED APPLICATION RUNNING!
+============================================================
+
+WORKFLOW: Lookup → Set Priorities → Download Color-Coded Excel
+
+Servers:
+--------
+Backend API:  http://localhost:8001
+Frontend UI:  http://localhost:3001
+
+Status:
+-------
+✓ Octopart API: [OK] - Fetches part alternatives
+✓ Gemini API: [OK] - AI color coding decisions
+✓ Color Coding: [OK] - Only in Excel export
+✓ Excel Export: [OK] - Beautiful color-coded reports
+
+Terminal Sessions:
+------------------
+Terminal 12: Backend (Python/FastAPI on port 8001)
+Terminal 11: Frontend (Vite/React on port 3001)
+
+============================================================
+
+SIMPLIFIED UI (No Color-Coded Table):
+======================================
+
+OLD FLOW (Removed):
+-------------------
+✗ Step 3: View color-coded comparison table in UI
+✗ Step 4: Download report
+
+NEW FLOW (Simplified):
+----------------------
+✓ Step 1: Lookup part specifications from Octopart
+✓ Step 2: Set priorities (1=Must Match, 2=Can Differ, 3=Cosmetic)
+✓ Step 3: Download color-coded Excel report directly
+
+NO UI COLOR CODING - Color coding only in Excel file!
+
+============================================================
+
+HOW TO USE:
+===========
+
+1. Open browser: http://localhost:3001
+
+2. Enter part number and click "Lookup Specs"
+   Examples: LM317, MCP73831T, ATMEGA328P
+
+3. Set priorities for each parameter:
+   • Priority 1 = Must Match (Critical)
+   • Priority 2 = Can Differ (Acceptable variation)
+   • Priority 3 = Cosmetic (Low importance)
+
+4. Click "Download Color-Coded Excel Report"
+   → Excel will be generated with beautiful color coding:
+      🟨 Yellow headers
+      ⬜ Gray attribute column  
+      🟢 Green cells = Match
+      🟠 Orange cells = Variation
+      🔴 Red cells = Missing/Critical difference
+
+============================================================
+
+WHAT CHANGED:
+=============
+
+Removed from UI:
+----------------
+✗ Color-coded comparison table display
+✗ "Find Replacements & Analyze" button
+✗ Frontend color coding logic
+✗ Analysis results display
+
+Kept in UI:
+-----------
+✓ Part lookup
+✓ Priority settings
+✓ Download button
+✓ Clean, simple interface
+
+Where Color Coding Happens:
+----------------------------
+1. Backend fetches alternatives from Octopart
+2. Gemini AI analyzes each alternative vs EOL part
+3. colour.py applies color coding to Excel cells
+4. User downloads beautiful color-coded Excel
+
+============================================================
+
+API ENDPOINTS:
+==============
+
+GET  /api/v1/lookup_eol_specs/{part_number}
+     → Fetch part specs from Octopart
+
+POST /api/v1/download_report
+     → Generate & download color-coded Excel
+     Body: { eol_part_number, priority_map }
+
+============================================================
+
+TO STOP:
+========
+Press Ctrl+C in Terminal 12 (backend)
+Press Ctrl+C in Terminal 11 (frontend)
+
+============================================================
+
+READY! Open http://localhost:3001
+Simple workflow: Lookup → Priorities → Download Excel
+============================================================
