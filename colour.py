@@ -4,7 +4,7 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 import os
 import re
 from datetime import datetime
-import traceback
+
 
 def compare_values(value1, value2):
     """
