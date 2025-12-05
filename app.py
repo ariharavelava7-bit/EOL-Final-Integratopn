@@ -12,11 +12,12 @@ from dotenv import load_dotenv
 from octopartapi import OctopartAPI
 from colour import apply_color_coding_to_excel
 from excelwriter import ExcelWriter
+from multi_api_integration import search_component_3api
 
 # Load environment variables
 load_dotenv()
 
-app = FastAPI(title="Octopart FFF Validation with Color Coding")
+app = FastAPI(title="Octopart FFF Validation with Color Coding - 3-API Integration")
 
 # CORS middleware
 app.add_middleware(
@@ -30,6 +31,9 @@ app.add_middleware(
 # Configuration
 OCTOPART_CLIENT_ID = os.getenv("OCTOPART_CLIENT_ID", "")
 OCTOPART_CLIENT_SECRET = os.getenv("OCTOPART_CLIENT_SECRET", "")
+DIGIKEY_CLIENT_ID = os.getenv("DIGIKEY_CLIENT_ID", "")
+DIGIKEY_CLIENT_SECRET = os.getenv("DIGIKEY_CLIENT_SECRET", "")
+MOUSER_API_KEY = os.getenv("MOUSER_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # Initialize APIs
@@ -44,6 +48,15 @@ if GEMINI_API_KEY:
 else:
     print("WARNING: Gemini API key not configured")
 
+# Check 3-API configuration
+print("=" * 60)
+print("3-API Integration Status:")
+print(f"  Octopart: {'[OK]' if octopart_api else '[NOT CONFIGURED]'}")
+print(f"  Digi-Key: {'[OK]' if DIGIKEY_CLIENT_ID and DIGIKEY_CLIENT_SECRET else '[OPTIONAL]'}")
+print(f"  Mouser: {'[OK]' if MOUSER_API_KEY else '[OPTIONAL]'}")
+print(f"  Gemini: {'[OK]' if GEMINI_API_KEY else '[OPTIONAL]'}")
+print("=" * 60)
+
 # Pydantic models
 class PriorityMap(BaseModel):
     parameter: str
@@ -51,6 +64,7 @@ class PriorityMap(BaseModel):
 
 class AnalyzeRequest(BaseModel):
     eol_part_number: str
+    manufacturer: str = None
     priority_map: List[PriorityMap]
 
 class PartSpec(BaseModel):
@@ -66,14 +80,19 @@ async def root():
     return {"message": "End of Line Part Replacer API"}
 
 @app.get("/api/v1/lookup_eol_specs/{part_number}")
-async def lookup_eol_specs(part_number: str):
-    """Lookup EOL part specifications from Octopart"""
+async def lookup_eol_specs(part_number: str, manufacturer: str = None):
+    """Lookup EOL part specifications from Octopart
+    
+    Args:
+        part_number: Part number to search for
+        manufacturer: Optional manufacturer name to prioritize
+    """
     # Always use real Octopart data (no mock/sample data)
     if not octopart_api:
         raise HTTPException(status_code=503, detail="Octopart API not configured. Please add credentials to .env file")
     
     try:
-        # Small limit to reduce API usage (EOL + up to 2 alternatives)
+        # Small limit to reduce API usage (EOL + up to 2 alternatives for lookup)
         recommendations = octopart_api.search_similar_parts(part_number, limit=3)
         if not recommendations:
             raise HTTPException(status_code=404, detail=f"No parts found for {part_number}")
@@ -95,9 +114,10 @@ async def lookup_eol_specs(part_number: str):
 
 @app.post("/api/v1/download_report")
 async def download_report(request: AnalyzeRequest):
-    """Generate and download color-coded Excel report using real Octopart data.
-
-    Uses a very small Octopart limit (3) → EOL + up to 2 alternatives.
+    """Generate and download color-coded Excel report using 3-API integration.
+    
+    Uses Octopart (cached 30 days) + Digi-Key + Mouser (real-time pricing).
+    Falls back to Octopart-only if other APIs are not configured.
     """
     try:
         eol_part_number = request.eol_part_number
@@ -105,10 +125,51 @@ async def download_report(request: AnalyzeRequest):
         if not octopart_api:
             raise HTTPException(status_code=503, detail="Octopart API not configured")
 
-        # Fetch a very small number of parts (EOL + up to 2 alternatives)
-        recommendations = octopart_api.search_similar_parts(eol_part_number, limit=3)
-        if not recommendations:
-            raise HTTPException(status_code=404, detail="No parts found from Octopart")
+        # Try 3-API integration first (if Digi-Key and/or Mouser are configured)
+        merged_parts = []
+        
+        if DIGIKEY_CLIENT_ID or MOUSER_API_KEY:
+            # Use 3-API integration
+            print(f"\n[INFO] Using 3-API integration (Octopart + Digi-Key + Mouser)")
+            manufacturer_name = request.manufacturer if request.manufacturer else None
+            merged_parts = search_component_3api(
+                octopart_id=OCTOPART_CLIENT_ID,
+                octopart_secret=OCTOPART_CLIENT_SECRET,
+                digikey_id=DIGIKEY_CLIENT_ID,
+                digikey_secret=DIGIKEY_CLIENT_SECRET,
+                mouser_key=MOUSER_API_KEY,
+                part_number=eol_part_number,
+                manufacturer=manufacturer_name,
+                limit=5  # Set to 5 alternatives as requested
+            )
+            
+            if not merged_parts:
+                raise HTTPException(status_code=404, detail="No parts found from 3-API integration")
+        else:
+            # Fallback to Octopart-only
+            print(f"\n[INFO] Using Octopart-only (Digi-Key/Mouser not configured)")
+            recommendations = octopart_api.search_similar_parts(eol_part_number, limit=5)
+            if not recommendations:
+                raise HTTPException(status_code=404, detail="No parts found from Octopart")
+            
+            # Convert to merged format
+            for rec in recommendations:
+                merged = {}
+                merged['MPN'] = rec.get('ManufacturerPartNumber', rec.get('MPN', 'N/A'))
+                merged['Manufacturer'] = rec.get('Manufacturer', 'N/A')
+                merged['Description'] = rec.get('Description', rec.get('ShortDescription', 'N/A'))
+                merged['Category'] = rec.get('Category', 'N/A')
+                
+                # Add all specs
+                for key, value in rec.items():
+                    if key not in ['ManufacturerPartNumber', 'MPN', 'Manufacturer', 'Description', 
+                                  'ShortDescription', 'Category', '_internal_id', '_source']:
+                        if not key.startswith('SPEC_'):
+                            merged[f'SPEC_{key}'] = value
+                        else:
+                            merged[key] = value
+                
+                merged_parts.append(merged)
 
         # Create Excel with ExcelWriter (includes color coding)
         excel_writer = ExcelWriter()
@@ -119,19 +180,55 @@ async def download_report(request: AnalyzeRequest):
         # Ensure reports directory exists
         os.makedirs("reports", exist_ok=True)
 
-        # Save with color coding enabled
-        excel_writer.save_to_excel(
-            original_part=eol_part_number,
-            recommendations=recommendations,
-            output_file=temp_filepath,
-            apply_color_coding=True
+        # Use the new create_comparison method directly
+        temp_file = temp_filepath.replace('.xlsx', '_temp.xlsx')
+        excel_writer.create_comparison(
+            parts_data=merged_parts,
+            filename=temp_file,
+            original_part=eol_part_number
         )
+        
+        # Apply color coding
+        final_file = temp_filepath
+        try:
+            import time
+            time.sleep(0.5)
+            apply_color_coding_to_excel(temp_file, final_file)
+            
+            # Clean up temp file
+            if os.path.exists(temp_file):
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        time.sleep(0.3)
+                        os.remove(temp_file)
+                        break
+                    except PermissionError:
+                        if attempt < max_retries - 1:
+                            time.sleep(0.5)
+                else:
+                    print(f"[WARNING] Could not delete temp file")
+        except Exception as e:
+            print(f"[WARNING] Color coding failed: {e}")
+            if os.path.exists(temp_file):
+                import time
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        time.sleep(0.3)
+                        if os.path.exists(final_file):
+                            os.remove(final_file)
+                        os.rename(temp_file, final_file)
+                        break
+                    except (PermissionError, OSError):
+                        if attempt < max_retries - 1:
+                            time.sleep(0.5)
 
         # Return the color-coded file
         return FileResponse(
-            path=temp_filepath,
+            path=final_file,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            filename=os.path.basename(temp_filepath)
+            filename=os.path.basename(final_file)
         )
 
     except HTTPException:
@@ -243,9 +340,11 @@ def fallback_comparison(eol_specs: Dict, candidate_specs: Dict) -> Dict:
 if __name__ == "__main__":
     import uvicorn
     print("=" * 60)
-    print("Starting End of Line Part Replacer")
+    print("Starting End of Line Part Replacer - 3-API Integration")
     print("=" * 60)
     print(f"Octopart API: {'[OK]' if octopart_api else '[NOT CONFIGURED]'}")
-    print(f"Gemini API: {'[OK]' if GEMINI_API_KEY else '[NOT CONFIGURED]'}")
+    print(f"Digi-Key API: {'[OK]' if DIGIKEY_CLIENT_ID and DIGIKEY_CLIENT_SECRET else '[OPTIONAL]'}")
+    print(f"Mouser API: {'[OK]' if MOUSER_API_KEY else '[OPTIONAL]'}")
+    print(f"Gemini API: {'[OK]' if GEMINI_API_KEY else '[OPTIONAL]'}")
     print("=" * 60)
     uvicorn.run(app, host="0.0.0.0", port=8001)

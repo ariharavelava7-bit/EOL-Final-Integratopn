@@ -13,6 +13,7 @@ const API_BASE_URL = 'http://localhost:8001';
 
 function Dashboard() {
   const [partNumber, setPartNumber] = useState('');
+  const [manufacturer, setManufacturer] = useState('');
   const [eolSpecs, setEolSpecs] = useState([]);
   const [priorityMap, setPriorityMap] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -63,7 +64,13 @@ function Dashboard() {
     setPriorityMap([]);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/lookup_eol_specs/${encodeURIComponent(partNumber)}`);
+      // Build URL with manufacturer if provided
+      let url = `${API_BASE_URL}/api/v1/lookup_eol_specs/${encodeURIComponent(partNumber)}`;
+      if (manufacturer.trim()) {
+        url += `?manufacturer=${encodeURIComponent(manufacturer.trim())}`;
+      }
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch specs: ${response.statusText}`);
@@ -78,7 +85,8 @@ function Dashboard() {
         priority: 2
       }));
       setPriorityMap(initialPriorities);
-      setSuccessMessage(`✓ Found ${specs.length} specifications for ${partNumber}`);
+      const mfrText = manufacturer.trim() ? ` (${manufacturer.trim()})` : '';
+      setSuccessMessage(`✓ Found ${specs.length} specifications for ${partNumber}${mfrText}`);
     } catch (err) {
       setError(err.message || 'Failed to fetch part specifications');
     } finally {
@@ -114,6 +122,7 @@ function Dashboard() {
         },
         body: JSON.stringify({
           eol_part_number: partNumber,
+          manufacturer: manufacturer.trim() || null,
           priority_map: priorityMap,
         }),
       });
@@ -201,23 +210,42 @@ function Dashboard() {
           <div className="card">
             <div className="card-heading">
               <h3>1. Lookup Part Specifications</h3>
-              <p className="card-subtitle">Enter EOL part number to fetch from Octopart</p>
+              <p className="card-subtitle">Enter EOL part number and manufacturer (optional) to fetch from Octopart</p>
             </div>
 
             <div className="input-group">
-              <input
-                type="text"
-                placeholder="Enter part number (e.g., LM317, MCP73831T)"
-                value={partNumber}
-                onChange={(e) => setPartNumber(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
-                className="input-primary"
-                disabled={loading}
-              />
+              <div className="input-row">
+                <div className="input-field-wrapper">
+                  <label htmlFor="part-number">Part Number *</label>
+                  <input
+                    id="part-number"
+                    type="text"
+                    placeholder="Enter part number (e.g., LM317, MCP73831T)"
+                    value={partNumber}
+                    onChange={(e) => setPartNumber(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
+                    className="input-primary"
+                    disabled={loading}
+                  />
+                </div>
+                <div className="input-field-wrapper">
+                  <label htmlFor="manufacturer">Manufacturer (Optional)</label>
+                  <input
+                    id="manufacturer"
+                    type="text"
+                    placeholder="e.g., Texas Instruments, STMicroelectronics"
+                    value={manufacturer}
+                    onChange={(e) => setManufacturer(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
+                    className="input-primary"
+                    disabled={loading}
+                  />
+                </div>
+              </div>
               <button
                 onClick={handleLookup}
                 disabled={loading || !partNumber.trim()}
-                className="btn btn-primary"
+                className="btn btn-primary btn-lookup"
               >
                 <FiSearch size={18} />
                 {loading ? 'Searching...' : 'Lookup Specs'}
@@ -235,40 +263,44 @@ function Dashboard() {
                 </p>
               </div>
 
-              <div className="custom-table">
-                <div className="table-header">
-                  <div className="col-param">Parameter</div>
-                  <div className="col-value">Value</div>
-                  <div className="col-priority">Priority</div>
+              <div className="table-container-wrapper">
+                <div className="custom-table">
+                  <div className="table-header">
+                    <div className="col-param">Parameter</div>
+                    <div className="col-value">Value</div>
+                    <div className="col-priority">Priority</div>
+                  </div>
+
+                  <div className="table-body-scroll">
+                    {eolSpecs.map((spec, index) => {
+                      const priorityItem = priorityMap.find(p => p.parameter === spec.parameter);
+                      const currentPriority = priorityItem?.priority || 2;
+
+                      return (
+                        <div key={index} className="table-row">
+                          <div className="col-param">{spec.parameter}</div>
+                          <div className="col-value">{spec.value}</div>
+                          <div className="col-priority">
+                            <select
+                              value={currentPriority}
+                              onChange={(e) => handlePriorityChange(spec.parameter, e.target.value)}
+                              className="priority-select"
+                              style={{
+                                borderColor: getPriorityColor(currentPriority),
+                                color: getPriorityColor(currentPriority),
+                                fontWeight: 600
+                              }}
+                            >
+                              <option value={1}>Priority 1: Must Match</option>
+                              <option value={2}>Priority 2: Can Differ</option>
+                              <option value={3}>Priority 3: Cosmetic</option>
+                            </select>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-
-                {eolSpecs.map((spec, index) => {
-                  const priorityItem = priorityMap.find(p => p.parameter === spec.parameter);
-                  const currentPriority = priorityItem?.priority || 2;
-
-                  return (
-                    <div key={index} className="table-row">
-                      <div className="col-param">{spec.parameter}</div>
-                      <div className="col-value">{spec.value}</div>
-                      <div className="col-priority">
-                        <select
-                          value={currentPriority}
-                          onChange={(e) => handlePriorityChange(spec.parameter, e.target.value)}
-                          className="priority-select"
-                          style={{
-                            borderColor: getPriorityColor(currentPriority),
-                            color: getPriorityColor(currentPriority),
-                            fontWeight: 600
-                          }}
-                        >
-                          <option value={1}>Priority 1: Must Match</option>
-                          <option value={2}>Priority 2: Can Differ</option>
-                          <option value={3}>Priority 3: Cosmetic</option>
-                        </select>
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
 
               <div style={{ marginTop: '1.5rem', textAlign: 'right' }}>
@@ -310,6 +342,10 @@ function Dashboard() {
               <li>
                 <span>Part Number</span>
                 <strong>{partNumber || '-'}</strong>
+              </li>
+              <li>
+                <span>Manufacturer</span>
+                <strong>{manufacturer || '-'}</strong>
               </li>
               <li>
                 <span>Specs Loaded</span>

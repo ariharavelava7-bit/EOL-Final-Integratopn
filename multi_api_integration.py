@@ -1,21 +1,12 @@
-#!/usr/bin/env python3
-"""
-3-API COMPONENT SEARCH INTEGRATION
-Octopart (Nexar) + Digi-Key + Mouser
-
-Enhanced with 30-day caching for specifications
-Real-time pricing from Mouser
-"""
+# multi_api_integration.py - 3-API Integration System
+# Integrates Octopart, Digi-Key, and Mouser APIs
+# Based on corrected_excel.py
 
 import requests
 import json
-import pandas as pd
 from datetime import datetime, timedelta
 import hashlib
 import os
-from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
-from openpyxl.utils import get_column_letter
 import urllib3
 
 # Suppress SSL certificate warnings
@@ -27,6 +18,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class SmartCache:
     """30-day cache for component specifications"""
+    
     def __init__(self, cache_dir=".component_cache"):
         self.cache_dir = cache_dir
         os.makedirs(cache_dir, exist_ok=True)
@@ -453,204 +445,12 @@ class DataMerger:
 
 
 # ============================================================================
-# EXCEL EXPORTER
-# ============================================================================
-
-class ExcelExporter:
-    """Create beautiful Excel comparison with all 3 APIs"""
-    
-    @staticmethod
-    def create_comparison(parts_data, filename, original_part):
-        """Create Excel comparison file"""
-        
-        if not parts_data:
-            print("❌ No data to export")
-            return
-        
-        print(f"\n📊 Creating Excel comparison...")
-        
-        # Organize attributes
-        all_attrs = set()
-        for part in parts_data:
-            all_attrs.update(part.keys())
-        
-        # Categorize attributes
-        basic = ['MPN', 'Manufacturer', 'Description', 'Category']
-        specs = sorted([a for a in all_attrs if a.startswith('SPEC_')])
-        mouser = sorted([a for a in all_attrs if a.startswith('Mouser_')])
-        
-        # Get original part data for filtering
-        original_part_data = parts_data[0] if parts_data else {}
-        
-        # Build filtered attribute list
-        attributes = []
-        
-        # Add section header: GENERAL DETAILS
-        attributes.append('=== GENERAL DETAILS ===')
-        
-        # Basic info
-        for attr in basic:
-            if attr in all_attrs:
-                val = original_part_data.get(attr, 'Not Available')
-                if val not in ['N/A', 'Not Available', '', None, '-']:
-                    attributes.append(attr)
-        
-        # Add section header: SPECIFICATIONS
-        if specs:
-            attributes.append('=== SPECIFICATIONS ===')
-            for attr in specs:
-                val = original_part_data.get(attr, 'Not Available')
-                if val not in ['N/A', 'Not Available', '', None, '-']:
-                    # Remove SPEC_ prefix
-                    clean_attr = attr.replace('SPEC_', '')
-                    attributes.append(clean_attr)
-        
-        # Add section header: PRICING & AVAILABILITY
-        if mouser:
-            attributes.append('=== PRICING & AVAILABILITY ===')
-            # Order Mouser fields logically
-            mouser_order = [
-                'Mouser_PartNumber',
-                'Mouser_Stock',
-                'Mouser_Availability',
-                'Mouser_LeadTime'
-            ]
-            # Add ordered fields first with clean names
-            mouser_name_map = {
-                'Mouser_PartNumber': 'Mouser Part Number',
-                'Mouser_Stock': 'Stock',
-                'Mouser_Availability': 'Availability',
-                'Mouser_LeadTime': 'LeadTime'
-            }
-            for mfield in mouser_order:
-                if mfield in mouser:
-                    attributes.append(mouser_name_map.get(mfield, mfield.replace('Mouser_', '')))
-            
-            # Add price breaks in sorted order
-            price_fields = sorted([m for m in mouser if 'Price_Qty' in m], 
-                                 key=lambda x: int(x.split('Qty')[1]))
-            for pfield in price_fields:
-                qty = pfield.split('Qty')[1]
-                attributes.append(f'Price (Qty {qty})')
-            
-            # Add remaining Mouser fields
-            remaining = [m for m in mouser if m not in mouser_order and 'Price_Qty' not in m]
-            for mfield in remaining:
-                attributes.append(mfield.replace('Mouser_', ''))
-        
-        # Create workbook
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Comparison"
-        
-        # Title
-        ws['A1'] = f"Component Comparison Report - {original_part}"
-        ws['A1'].font = Font(bold=True, size=14, color='FFFFFF')
-        ws['A1'].fill = PatternFill(start_color='1F4E78', end_color='1F4E78', fill_type='solid')
-        ws.merge_cells(f'A1:{get_column_letter(len(parts_data) + 1)}1')
-        ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
-        ws.row_dimensions[1].height = 25
-        
-        # Subtitle
-        ws['A2'] = f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Parts: {len(parts_data)} | Sources: Octopart + Digi-Key + Mouser"
-        ws['A2'].font = Font(italic=True, size=9, color='666666')
-        ws.merge_cells(f'A2:{get_column_letter(len(parts_data) + 1)}2')
-        ws['A2'].alignment = Alignment(horizontal='center')
-        
-        # Headers (row 3)
-        ws['A3'] = 'Attribute'
-        ws['A3'].font = Font(bold=True, size=11, color='FFFFFF')
-        ws['A3'].fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
-        ws['A3'].alignment = Alignment(horizontal='left', vertical='center')
-        
-        for idx, part in enumerate(parts_data, 1):
-            col = get_column_letter(idx + 1)
-            if idx == 1:
-                ws[f'{col}3'] = 'Original'
-            else:
-                ws[f'{col}3'] = f'Alternative {idx-1}'
-            ws[f'{col}3'].font = Font(bold=True, size=11, color='FFFFFF')
-            ws[f'{col}3'].fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
-            ws[f'{col}3'].alignment = Alignment(horizontal='center', vertical='center')
-        
-        # Data rows
-        row_idx = 4
-        for attr in attributes:
-            # Check if section header
-            if attr.startswith('==='):
-                ws[f'A{row_idx}'] = attr.replace('===', '').strip()
-                ws[f'A{row_idx}'].font = Font(bold=True, size=11, color='333333')
-                ws[f'A{row_idx}'].fill = PatternFill(start_color='E7E6E6', end_color='E7E6E6', fill_type='solid')
-                ws[f'A{row_idx}'].alignment = Alignment(horizontal='left', vertical='center')
-                ws.merge_cells(f'A{row_idx}:{get_column_letter(len(parts_data) + 1)}{row_idx}')
-                ws.row_dimensions[row_idx].height = 25
-            else:
-                # Map clean attribute name back to original key
-                if attr in ['MPN', 'Manufacturer', 'Description', 'Category']:
-                    data_key = attr
-                elif attr.startswith('Price (Qty'):
-                    qty = attr.split('Qty ')[1].rstrip(')')
-                    data_key = f'Mouser_Price_Qty{qty}'
-                elif attr == 'Mouser Part Number':
-                    data_key = 'Mouser_PartNumber'
-                elif attr in ['Stock', 'Availability', 'LeadTime', 'DataSheet', 'ProductURL']:
-                    data_key = f'Mouser_{attr}'
-                else:
-                    # Spec attribute
-                    data_key = f'SPEC_{attr}'
-                
-                # Attribute name
-                ws[f'A{row_idx}'] = attr
-                ws[f'A{row_idx}'].font = Font(bold=True, size=10)
-                ws[f'A{row_idx}'].alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
-                
-                # Data for each part
-                for col_idx, part in enumerate(parts_data, 1):
-                    col = get_column_letter(col_idx + 1)
-                    value = part.get(data_key, 'Not Available')
-                    
-                    # Replace all variations with "Not Available"
-                    if value in ['N/A', '-', '', None, 'Not Available']:
-                        value = 'Not Available'
-                    
-                    ws[f'{col}{row_idx}'] = str(value)
-                    ws[f'{col}{row_idx}'].alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
-                    ws[f'{col}{row_idx}'].font = Font(size=10)
-            
-            row_idx += 1
-        
-        # Set column widths
-        ws.column_dimensions['A'].width = 35
-        for col_idx in range(2, len(parts_data) + 2):
-            ws.column_dimensions[get_column_letter(col_idx)].width = 30
-        
-        # Freeze panes
-        ws.freeze_panes = 'B4'
-        
-        # Add borders to all cells
-        thin_border = Border(
-            left=Side(style='thin', color='CCCCCC'),
-            right=Side(style='thin', color='CCCCCC'),
-            top=Side(style='thin', color='CCCCCC'),
-            bottom=Side(style='thin', color='CCCCCC')
-        )
-        
-        for row in ws.iter_rows(min_row=3, max_row=row_idx-1, min_col=1, max_col=len(parts_data)+1):
-            for cell in row:
-                cell.border = thin_border
-        
-        # Save
-        wb.save(filename)
-        print(f"✅ Excel saved: {filename}")
-        print(f"   Attributes: {len([a for a in attributes if not a.startswith('===')])} (filtered)")
-
-
-# ============================================================================
 # MAIN INTEGRATION FUNCTION
 # ============================================================================
 
-def search_component(octopart_id, octopart_secret, digikey_id, digikey_secret, mouser_key, part_number, manufacturer=None, limit=10):
-    """Main integration function"""
+def search_component_3api(octopart_id, octopart_secret, digikey_id, digikey_secret, 
+                          mouser_key, part_number, manufacturer=None, limit=10):
+    """Main integration function for 3-API search"""
     
     print("="*80)
     print("3-API COMPONENT SEARCH INTEGRATION")
@@ -659,8 +459,8 @@ def search_component(octopart_id, octopart_secret, digikey_id, digikey_secret, m
     
     # Initialize clients
     octopart = OctopartClient(octopart_id, octopart_secret)
-    digikey = DigiKeyClient(digikey_id, digikey_secret)
-    mouser = MouserClient(mouser_key)
+    digikey = DigiKeyClient(digikey_id, digikey_secret) if digikey_id and digikey_secret else None
+    mouser = MouserClient(mouser_key) if mouser_key else None
     
     # Step 1: Get parts from Octopart - SEARCH BY PART NUMBER ONLY
     print(f"\n📊 Step 1: Searching Octopart for alternatives (part number only)...")
@@ -668,7 +468,7 @@ def search_component(octopart_id, octopart_secret, digikey_id, digikey_secret, m
     
     if not octopart_parts:
         print("❌ No parts found")
-        return
+        return []
     
     # Step 1.5: If manufacturer specified, prioritize it as first result
     if manufacturer:
@@ -709,71 +509,20 @@ def search_component(octopart_id, octopart_secret, digikey_id, digikey_secret, m
         print(f"\n[{idx}/{len(octopart_parts)}] Processing: {mpn} ({manufacturer_name})")
         
         # Check if we need Digi-Key data
-        specs_count = len([k for k in octo_part.keys() if k.startswith('specs')])
         digikey_data = None
-        if specs_count < 30:  # If less than 30 specs, try Digi-Key
-            digikey_data = digikey.search_part(mpn)
+        if digikey:
+            specs_count = len(octo_part.get('specs', []))
+            if specs_count < 30:  # If less than 30 specs, try Digi-Key
+                digikey_data = digikey.search_part(mpn)
         
         # Always get fresh Mouser data - NOW WITH MANUFACTURER
-        mouser_data = mouser.get_pricing_and_stock(mpn, manufacturer_name)
+        mouser_data = None
+        if mouser:
+            mouser_data = mouser.get_pricing_and_stock(mpn, manufacturer_name)
         
         # Merge all data
         merged = DataMerger.merge_part_data(octo_part, digikey_data, mouser_data)
         merged_parts.append(merged)
     
-    # Step 3: Create Excel
-    print(f"\n📊 Step 3: Creating Excel comparison...")
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f"{part_number}_3api_comparison_{timestamp}.xlsx"
-    
-    ExcelExporter.create_comparison(merged_parts, filename, part_number)
-    
-    # Summary
-    print("\n" + "="*80)
-    print("✅ COMPLETE!")
-    print("="*80)
-    print(f"Parts found: {len(merged_parts)}")
-    print(f"Output file: {filename}")
-    print(f"\n💡 Next search for '{part_number}' will use cached Octopart data!")
+    return merged_parts
 
-
-# ============================================================================
-# COMMAND LINE INTERFACE
-# ============================================================================
-
-if __name__ == "__main__":
-    print("\n3-API Component Search System")
-    print("="*80)
-    
-    # Get credentials
-    print("\n🔑 Enter API Credentials:")
-    octopart_id = input("Octopart Client ID: ").strip()
-    octopart_secret = input("Octopart Client Secret: ").strip()
-    
-    digikey_id = input("Digi-Key Client ID: ").strip()
-    digikey_secret = input("Digi-Key Client Secret: ").strip()
-    
-    mouser_key = input("Mouser API Key: ").strip()
-    
-    # Get search parameters
-    print("\n🔍 Search Parameters:")
-    part_number = input("Part Number: ").strip()
-    manufacturer = input("Manufacturer (optional, e.g., 'Texas Instruments', 'STMicroelectronics'): ").strip()
-    limit = input("Number of similar parts (default 10): ").strip()
-    limit = int(limit) if limit else 10
-    
-    # Display search strategy
-    if manufacturer:
-        print(f"\n✓ Strategy:")
-        print(f"   - Original: {part_number} from {manufacturer}")
-        print(f"   - Alternatives: {part_number} from ANY manufacturer")
-    else:
-        print(f"\n✓ Searching for: {part_number} (all manufacturers)")
-    
-    # Execute search - pass manufacturer separately
-    search_component(
-        octopart_id, octopart_secret,
-        digikey_id, digikey_secret,
-        mouser_key,
-        part_number, manufacturer, limit
-    )
