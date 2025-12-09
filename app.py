@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Optional
 import os
 from datetime import datetime
 import google.generativeai as genai
@@ -64,7 +64,7 @@ class PriorityMap(BaseModel):
 
 class AnalyzeRequest(BaseModel):
     eol_part_number: str
-    manufacturer: str = None
+    manufacturer: Optional[str] = None
     priority_map: List[PriorityMap]
 
 class PartSpec(BaseModel):

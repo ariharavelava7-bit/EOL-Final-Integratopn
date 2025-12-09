@@ -122,7 +122,7 @@ function Dashboard() {
         },
         body: JSON.stringify({
           eol_part_number: partNumber,
-          manufacturer: manufacturer.trim() || null,
+          ...(manufacturer.trim() && { manufacturer: manufacturer.trim() }),
           priority_map: priorityMap,
         }),
       });

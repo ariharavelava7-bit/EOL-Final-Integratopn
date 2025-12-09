@@ -526,3 +526,5 @@ def search_component_3api(octopart_id, octopart_secret, digikey_id, digikey_secr
     
     return merged_parts
 
+
+
