@@ -1,356 +1,274 @@
-import React, { useState, useEffect } from 'react';
-import { FiSave, FiKey, FiSettings, FiBell, FiEye, FiEyeOff } from 'react-icons/fi';
-import { useTheme } from '../context/ThemeContext';
-import './Settings.css';
+import React, { useState } from 'react';
+import { FiSave, FiMoon, FiSun, FiBell, FiDatabase, FiKey, FiGlobe } from 'react-icons/fi';
+import { useApp } from '../context/AppContext';
+import './Pages.css';
 
 function Settings() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useApp();
+  const darkMode = theme === 'dark';
+  const [activeSection, setActiveSection] = useState('general');
+  
   const [settings, setSettings] = useState({
-    apiKeys: {
-      octopartId: '',
-      octopartSecret: '',
-      mouserKey: '',
-      digikeyId: '',
-      digikeySecret: '',
-      geminiKey: ''
-    },
-    preferences: {
-      defaultPriority: '2',
-      autoDownload: false,
-      emailNotifications: false
-    },
-    notifications: {
-      analysisComplete: true,
-      errors: true,
-      weeklyReport: false
-    }
+    emailNotifications: true,
+    pushNotifications: false,
+    obsolescenceAlerts: true,
+    priceChangeAlerts: true,
+    autoRefresh: true,
+    refreshInterval: 30,
+    defaultSearchLimit: 10,
+    cacheExpiry: 24,
+    apiTimeout: 30,
   });
 
-  const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState(null);
-  const [showKeys, setShowKeys] = useState({});
-
-  useEffect(() => {
-    // Load saved settings
-    const saved = localStorage.getItem('appSettings');
-    if (saved) {
-      try {
-        setSettings(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to load settings');
-      }
-    }
-  }, []);
-
-  const handleInputChange = (section, key, value) => {
-    setSettings(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [key]: value
-      }
-    }));
+  const handleToggle = (key) => {
+    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const toggleKeyVisibility = (key) => {
-    setShowKeys(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+  const handleChange = (key, value) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    setSaveMessage(null);
-    
-    // Save to localStorage
-    localStorage.setItem('appSettings', JSON.stringify(settings));
-    
-    // Simulate API call
-    setTimeout(() => {
-      setSaving(false);
-      setSaveMessage({ type: 'success', text: 'Settings saved successfully' });
-      setTimeout(() => setSaveMessage(null), 3000);
-    }, 1000);
-  };
-
-  const handleReset = () => {
-    if (window.confirm('Are you sure you want to reset all settings?')) {
-      setSettings({
-        apiKeys: {
-          octopartId: '',
-          octopartSecret: '',
-          mouserKey: '',
-          digikeyId: '',
-          digikeySecret: '',
-          geminiKey: ''
-        },
-        preferences: {
-          defaultPriority: '2',
-          autoDownload: false,
-          emailNotifications: false
-        },
-        notifications: {
-          analysisComplete: true,
-          errors: true,
-          weeklyReport: false
-        }
-      });
-      localStorage.removeItem('appSettings');
-      setSaveMessage({ type: 'info', text: 'Settings reset to defaults' });
-      setTimeout(() => setSaveMessage(null), 3000);
-    }
-  };
+  const sections = [
+    { id: 'general', label: 'General', icon: FiGlobe },
+    { id: 'notifications', label: 'Notifications', icon: FiBell },
+    { id: 'data', label: 'Data & Cache', icon: FiDatabase },
+    { id: 'api', label: 'API Settings', icon: FiKey },
+  ];
 
   return (
-    <div className="settings-page">
+    <div className="page-container">
       <div className="page-header">
-        <h2>Settings</h2>
-        <p>Configure your application settings and preferences</p>
+        <div>
+          <h1>Settings</h1>
+          <p>Manage your application preferences</p>
+        </div>
+        <button className="btn-primary">
+          <FiSave size={18} />
+          Save Changes
+        </button>
       </div>
 
-      {saveMessage && (
-        <div className={`alert alert-${saveMessage.type}`}>
-          {saveMessage.text}
-        </div>
-      )}
-
-      <div className="settings-container">
-        <div className="card settings-section">
-          <div className="section-header">
-            <FiKey className="section-icon" />
-            <h3>API Credentials</h3>
-          </div>
-          <p className="section-description">
-            Configure your API keys for external services. Keys are stored securely.
-          </p>
-          
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Octopart Client ID</label>
-              <input
-                type="text"
-                value={settings.apiKeys.octopartId}
-                onChange={(e) => handleInputChange('apiKeys', 'octopartId', e.target.value)}
-                placeholder="Enter Octopart Client ID"
-                className="input-field"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Octopart Client Secret</label>
-              <div className="password-input-group">
-                <input
-                  type={showKeys.octopartSecret ? "text" : "password"}
-                  value={settings.apiKeys.octopartSecret}
-                  onChange={(e) => handleInputChange('apiKeys', 'octopartSecret', e.target.value)}
-                  placeholder="Enter Octopart Client Secret"
-                  className="input-field"
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => toggleKeyVisibility('octopartSecret')}
-                >
-                  {showKeys.octopartSecret ? <FiEyeOff /> : <FiEye />}
-                </button>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Mouser API Key</label>
-              <div className="password-input-group">
-                <input
-                  type={showKeys.mouserKey ? "text" : "password"}
-                  value={settings.apiKeys.mouserKey}
-                  onChange={(e) => handleInputChange('apiKeys', 'mouserKey', e.target.value)}
-                  placeholder="Enter Mouser API Key"
-                  className="input-field"
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => toggleKeyVisibility('mouserKey')}
-                >
-                  {showKeys.mouserKey ? <FiEyeOff /> : <FiEye />}
-                </button>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Digi-Key Client ID</label>
-              <input
-                type="text"
-                value={settings.apiKeys.digikeyId}
-                onChange={(e) => handleInputChange('apiKeys', 'digikeyId', e.target.value)}
-                placeholder="Enter Digi-Key Client ID"
-                className="input-field"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Digi-Key Client Secret</label>
-              <div className="password-input-group">
-                <input
-                  type={showKeys.digikeySecret ? "text" : "password"}
-                  value={settings.apiKeys.digikeySecret}
-                  onChange={(e) => handleInputChange('apiKeys', 'digikeySecret', e.target.value)}
-                  placeholder="Enter Digi-Key Client Secret"
-                  className="input-field"
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => toggleKeyVisibility('digikeySecret')}
-                >
-                  {showKeys.digikeySecret ? <FiEyeOff /> : <FiEye />}
-                </button>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Gemini API Key</label>
-              <div className="password-input-group">
-                <input
-                  type={showKeys.geminiKey ? "text" : "password"}
-                  value={settings.apiKeys.geminiKey}
-                  onChange={(e) => handleInputChange('apiKeys', 'geminiKey', e.target.value)}
-                  placeholder="Enter Gemini API Key"
-                  className="input-field"
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => toggleKeyVisibility('geminiKey')}
-                >
-                  {showKeys.geminiKey ? <FiEyeOff /> : <FiEye />}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card settings-section">
-          <div className="section-header">
-            <FiSettings className="section-icon" />
-            <h3>Preferences</h3>
-          </div>
-          <p className="section-description">
-            Set your default preferences for analysis and reports
-          </p>
-
-          <div className="form-group">
-            <label>Default Priority Level</label>
-            <select
-              value={settings.preferences.defaultPriority}
-              onChange={(e) => handleInputChange('preferences', 'defaultPriority', e.target.value)}
-              className="input-field"
-            >
-              <option value="1">Priority 1: Must Match</option>
-              <option value="2">Priority 2: Can Differ</option>
-              <option value="3">Priority 3: Cosmetic</option>
-            </select>
-          </div>
-
-          <div className="checkbox-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={settings.preferences.autoDownload}
-                onChange={(e) => handleInputChange('preferences', 'autoDownload', e.target.checked)}
-              />
-              <span>Auto-download reports after analysis</span>
-            </label>
-
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={settings.preferences.emailNotifications}
-                onChange={(e) => handleInputChange('preferences', 'emailNotifications', e.target.checked)}
-              />
-              <span>Enable email notifications</span>
-            </label>
-          </div>
-        </div>
-
-        <div className="card settings-section">
-          <div className="section-header">
-            <FiBell className="section-icon" />
-            <h3>Notifications</h3>
-          </div>
-          <p className="section-description">
-            Manage your notification preferences
-          </p>
-
-          <div className="checkbox-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={settings.notifications.analysisComplete}
-                onChange={(e) => handleInputChange('notifications', 'analysisComplete', e.target.checked)}
-              />
-              <span>Notify when analysis completes</span>
-            </label>
-
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={settings.notifications.errors}
-                onChange={(e) => handleInputChange('notifications', 'errors', e.target.checked)}
-              />
-              <span>Notify on errors</span>
-            </label>
-
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={settings.notifications.weeklyReport}
-                onChange={(e) => handleInputChange('notifications', 'weeklyReport', e.target.checked)}
-              />
-              <span>Weekly summary report</span>
-            </label>
-          </div>
-        </div>
-
-        <div className="card settings-section">
-          <div className="section-header">
-            <FiSettings className="section-icon" />
-            <h3>Appearance</h3>
-          </div>
-          <p className="section-description">
-            Customize the application appearance
-          </p>
-
-          <div className="theme-toggle-section">
-            <label className="theme-toggle-label">
-              <span>Theme</span>
-              <button 
-                className="btn btn-secondary"
-                onClick={toggleTheme}
+      <div className="settings-layout">
+        <div className="settings-sidebar">
+          {sections.map(section => {
+            const Icon = section.icon;
+            return (
+              <button
+                key={section.id}
+                className={`settings-nav-item ${activeSection === section.id ? 'active' : ''}`}
+                onClick={() => setActiveSection(section.id)}
               >
-                {theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+                <Icon size={18} />
+                {section.label}
               </button>
-            </label>
-            <p className="theme-description">
-              Current theme: <strong>{theme === 'light' ? 'Light' : 'Dark'}</strong>
-            </p>
-          </div>
+            );
+          })}
         </div>
 
-        <div className="settings-actions">
-          <button 
-            className="btn btn-primary btn-icon"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            <FiSave /> {saving ? 'Saving...' : 'Save Settings'}
-          </button>
-          <button 
-            className="btn btn-secondary"
-            onClick={handleReset}
-          >
-            Reset to Defaults
-          </button>
+        <div className="settings-content">
+          {activeSection === 'general' && (
+            <div className="settings-section">
+              <h2>General Settings</h2>
+              
+              <div className="setting-item">
+                <div className="setting-info">
+                  <div className="setting-label">Dark Mode</div>
+                  <div className="setting-description">Enable dark theme for better visibility in low light</div>
+                </div>
+                <button 
+                  className={`toggle-btn ${darkMode ? 'toggle-active' : ''}`}
+                  onClick={toggleTheme}
+                >
+                  <span className="toggle-slider"></span>
+                  {darkMode ? <FiMoon size={14} /> : <FiSun size={14} />}
+                </button>
+              </div>
+
+              <div className="setting-item">
+                <div className="setting-info">
+                  <div className="setting-label">Auto Refresh Data</div>
+                  <div className="setting-description">Automatically refresh part data at regular intervals</div>
+                </div>
+                <button 
+                  className={`toggle-btn ${settings.autoRefresh ? 'toggle-active' : ''}`}
+                  onClick={() => handleToggle('autoRefresh')}
+                >
+                  <span className="toggle-slider"></span>
+                </button>
+              </div>
+
+              {settings.autoRefresh && (
+                <div className="setting-item setting-sub-item">
+                  <div className="setting-info">
+                    <div className="setting-label">Refresh Interval (minutes)</div>
+                  </div>
+                  <select 
+                    value={settings.refreshInterval}
+                    onChange={(e) => handleChange('refreshInterval', e.target.value)}
+                    className="setting-select"
+                  >
+                    <option value={15}>15 minutes</option>
+                    <option value={30}>30 minutes</option>
+                    <option value={60}>1 hour</option>
+                  </select>
+                </div>
+              )}
+
+              <div className="setting-item">
+                <div className="setting-info">
+                  <div className="setting-label">Default Search Results</div>
+                  <div className="setting-description">Number of results to show per search</div>
+                </div>
+                <select 
+                  value={settings.defaultSearchLimit}
+                  onChange={(e) => handleChange('defaultSearchLimit', e.target.value)}
+                  className="setting-select"
+                >
+                  <option value={5}>5 results</option>
+                  <option value={10}>10 results</option>
+                  <option value={20}>20 results</option>
+                  <option value={50}>50 results</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'notifications' && (
+            <div className="settings-section">
+              <h2>Notification Preferences</h2>
+              
+              <div className="setting-item">
+                <div className="setting-info">
+                  <div className="setting-label">Email Notifications</div>
+                  <div className="setting-description">Receive important alerts via email</div>
+                </div>
+                <button 
+                  className={`toggle-btn ${settings.emailNotifications ? 'toggle-active' : ''}`}
+                  onClick={() => handleToggle('emailNotifications')}
+                >
+                  <span className="toggle-slider"></span>
+                </button>
+              </div>
+
+              <div className="setting-item">
+                <div className="setting-info">
+                  <div className="setting-label">Push Notifications</div>
+                  <div className="setting-description">Enable browser push notifications</div>
+                </div>
+                <button 
+                  className={`toggle-btn ${settings.pushNotifications ? 'toggle-active' : ''}`}
+                  onClick={() => handleToggle('pushNotifications')}
+                >
+                  <span className="toggle-slider"></span>
+                </button>
+              </div>
+
+              <div className="setting-item">
+                <div className="setting-info">
+                  <div className="setting-label">Obsolescence Alerts</div>
+                  <div className="setting-description">Get notified when parts become obsolete</div>
+                </div>
+                <button 
+                  className={`toggle-btn ${settings.obsolescenceAlerts ? 'toggle-active' : ''}`}
+                  onClick={() => handleToggle('obsolescenceAlerts')}
+                >
+                  <span className="toggle-slider"></span>
+                </button>
+              </div>
+
+              <div className="setting-item">
+                <div className="setting-info">
+                  <div className="setting-label">Price Change Alerts</div>
+                  <div className="setting-description">Get notified on significant price changes</div>
+                </div>
+                <button 
+                  className={`toggle-btn ${settings.priceChangeAlerts ? 'toggle-active' : ''}`}
+                  onClick={() => handleToggle('priceChangeAlerts')}
+                >
+                  <span className="toggle-slider"></span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'data' && (
+            <div className="settings-section">
+              <h2>Data & Cache Settings</h2>
+              
+              <div className="setting-item">
+                <div className="setting-info">
+                  <div className="setting-label">Cache Expiry (hours)</div>
+                  <div className="setting-description">How long to keep cached data before refreshing</div>
+                </div>
+                <select 
+                  value={settings.cacheExpiry}
+                  onChange={(e) => handleChange('cacheExpiry', e.target.value)}
+                  className="setting-select"
+                >
+                  <option value={12}>12 hours</option>
+                  <option value={24}>24 hours</option>
+                  <option value={48}>48 hours</option>
+                  <option value={168}>1 week</option>
+                </select>
+              </div>
+
+              <div className="setting-item">
+                <div className="setting-info">
+                  <div className="setting-label">Clear Cache</div>
+                  <div className="setting-description">Remove all cached data and start fresh</div>
+                </div>
+                <button className="btn-danger-outline">Clear Cache</button>
+              </div>
+
+              <div className="setting-item">
+                <div className="setting-info">
+                  <div className="setting-label">Export Data</div>
+                  <div className="setting-description">Download all your data as JSON</div>
+                </div>
+                <button className="btn-secondary-sm">Export</button>
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'api' && (
+            <div className="settings-section">
+              <h2>API Configuration</h2>
+              
+              <div className="setting-item">
+                <div className="setting-info">
+                  <div className="setting-label">API Timeout (seconds)</div>
+                  <div className="setting-description">Maximum time to wait for API responses</div>
+                </div>
+                <select 
+                  value={settings.apiTimeout}
+                  onChange={(e) => handleChange('apiTimeout', e.target.value)}
+                  className="setting-select"
+                >
+                  <option value={15}>15 seconds</option>
+                  <option value={30}>30 seconds</option>
+                  <option value={60}>60 seconds</option>
+                </select>
+              </div>
+
+              <div className="api-status-card">
+                <h3>API Status</h3>
+                <div className="api-status-list">
+                  <div className="api-status-item">
+                    <span>Digi-Key API</span>
+                    <span className="status-badge status-active">Connected</span>
+                  </div>
+                  <div className="api-status-item">
+                    <span>Octopart/Nexar API</span>
+                    <span className="status-badge status-active">Connected</span>
+                  </div>
+                  <div className="api-status-item">
+                    <span>Mouser API</span>
+                    <span className="status-badge status-active">Connected</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

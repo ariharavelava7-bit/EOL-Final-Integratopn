@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 * {
   margin: 0;
@@ -7,223 +7,271 @@
 }
 
 :root {
-  /* Professional L&T Color Scheme - Light Mode */
-  --primary-blue: #003366;
-  --primary-blue-dark: #002244;
-  --primary-blue-light: #004080;
-  --secondary-blue: #0066CC;
-  --accent-blue: #0080FF;
-  --white: #FFFFFF;
-  --gray-50: #F8F9FA;
-  --gray-100: #E9ECEF;
-  --gray-200: #DEE2E6;
-  --gray-300: #CED4DA;
-  --gray-400: #ADB5BD;
-  --gray-500: #6C757D;
-  --gray-600: #495057;
-  --gray-700: #343A40;
-  --gray-800: #212529;
-  --success: #28A745;
-  --warning: #FFC107;
-  --error: #DC3545;
-  --info: #17A2B8;
+  /* Clean Minimalist Color Palette */
+  --primary-blue: #2563EB;
+  --primary-blue-dark: #1D4ED8;
+  --primary-blue-light: #3B82F6;
+  
+  /* Ocean Blues for Data Visualization */
+  --ocean-pale: #EFF6FF;
+  --ocean-sky: #DBEAFE;
+  --ocean-medium: #93C5FD;
+  --ocean-deep: #2563EB;
+  --ocean-azure: #1E40AF;
+  
+  /* Functional Colors */
+  --emerald-green: #059669;
+  --emerald-light: #ECFDF5;
+  --soft-red: #DC2626;
+  --soft-red-light: #FEF2F2;
+  --amber: #D97706;
+  --amber-light: #FEF3C7;
+  
+  /* Text Hierarchy */
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --text-tertiary: #9CA3AF;
+  
+  /* Backgrounds */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F9FAFB;
+  --bg-tertiary: #F3F4F6;
+  
+  /* Borders */
+  --border-light: #E5E7EB;
+  --border-medium: #D1D5DB;
 }
 
 [data-theme="dark"] {
-  /* Dark Mode Color Scheme */
-  --primary-blue: #4A90E2;
-  --primary-blue-dark: #357ABD;
-  --primary-blue-light: #5BA3F5;
-  --secondary-blue: #6BA3E8;
-  --accent-blue: #7DB3F0;
-  --white: #1A1A1A;
-  --gray-50: #2D2D2D;
-  --gray-100: #3A3A3A;
-  --gray-200: #4A4A4A;
-  --gray-300: #5A5A5A;
-  --gray-400: #6A6A6A;
-  --gray-500: #7A7A7A;
-  --gray-600: #9A9A9A;
-  --gray-700: #BABABA;
-  --gray-800: #E0E0E0;
-  --success: #4CAF50;
-  --warning: #FFB300;
-  --error: #F44336;
-  --info: #2196F3;
+  /* Dark Mode */
+  --primary-blue: #3B82F6;
+  --primary-blue-dark: #2563EB;
+  --primary-blue-light: #60A5FA;
+  
+  --ocean-pale: rgba(37, 99, 235, 0.1);
+  --ocean-sky: rgba(59, 130, 246, 0.2);
+  --ocean-medium: #60A5FA;
+  --ocean-deep: #3B82F6;
+  --ocean-azure: #93C5FD;
+  
+  --emerald-green: #34D399;
+  --emerald-light: rgba(5, 150, 105, 0.15);
+  --soft-red: #F87171;
+  --soft-red-light: rgba(220, 38, 38, 0.15);
+  --amber: #FBBF24;
+  --amber-light: rgba(217, 119, 6, 0.15);
+  
+  --text-primary: #F9FAFB;
+  --text-secondary: #D1D5DB;
+  --text-tertiary: #9CA3AF;
+  
+  --bg-primary: #1F2937;
+  --bg-secondary: #111827;
+  --bg-tertiary: #0F172A;
+  
+  --border-light: #374151;
+  --border-medium: #4B5563;
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--gray-50);
+  background: var(--color-bg-primary);
   min-height: 100vh;
-  color: var(--gray-800);
-  font-size: 14px;
-  line-height: 1.6;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 #root {
   min-height: 100vh;
 }
 
-.logo-badge {
-  width: 72px;
-  height: 72px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 240, 240, 0.85) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-}
-
-.logo-badge img {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
-}
-
-/* Professional Typography */
+/* Typography - Enterprise SaaS Design System */
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
-  color: var(--primary-blue);
+  color: var(--color-text-primary);
   line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 
-h1 { font-size: 2rem; }
-h2 { font-size: 1.75rem; }
-h3 { font-size: 1.5rem; }
-h4 { font-size: 1.25rem; }
-h5 { font-size: 1.1rem; }
-h6 { font-size: 1rem; }
+h1 { font-size: 16px; }
+h2 { font-size: 14px; font-weight: 500; }
+h3 { font-size: 14px; font-weight: 500; }
+h4 { font-size: 13px; font-weight: 500; }
+h5 { font-size: 13px; font-weight: 400; }
+h6 { font-size: 12px; font-weight: 400; }
 
 p {
-  color: var(--gray-700);
-  line-height: 1.7;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
 }
 
-/* Global utility classes */
+/* Cards - Enterprise SaaS Design */
 .card {
-  background: var(--white);
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 2px 4px rgba(0, 51, 102, 0.08);
-  border: 1px solid var(--gray-200);
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  background: var(--color-bg-card);
+  border-radius: 6px;
+  padding: 16px;
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
+/* Buttons - Enterprise SaaS Design */
 .btn {
-  padding: 10px 20px;
-  border: none;
+  padding: 8px 16px;
+  border: 1px solid #E5E7EB;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  font-family: 'Inter', sans-serif;
+  transition: all 0.15s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFFFFF;
+  color: #0F172A;
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .btn-primary {
-  background: var(--primary-blue);
-  color: var(--white);
+  background: #2563EB;
+  color: white;
+  border-color: #2563EB;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--primary-blue-dark);
-  box-shadow: 0 2px 8px rgba(0, 51, 102, 0.2);
+  background: #1D4ED8;
+  border-color: #1D4ED8;
 }
 
 .btn-secondary {
-  background: var(--gray-200);
-  color: var(--gray-800);
+  background: #FFFFFF;
+  color: #0F172A;
+  border: 1px solid #E5E7EB;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--gray-300);
+  background: #F8FAFC;
 }
 
 .btn-success {
-  background: var(--success);
-  color: var(--white);
+  background: var(--emerald-light);
+  color: var(--emerald-green);
 }
 
 .btn-success:hover:not(:disabled) {
-  background: #218838;
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+  background: #D1FAE5;
 }
 
+.btn-danger {
+  background: var(--soft-red-light);
+  color: var(--soft-red);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #FEE2E2;
+}
+
+/* Inputs - Enterprise SaaS Design */
 .input-field {
-  padding: 10px 14px;
-  border: 1px solid var(--gray-300);
+  padding: 8px 12px;
+  border: 1px solid var(--color-border-default);
   border-radius: 6px;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  font-family: 'Inter', sans-serif;
-  background: var(--white);
-  color: var(--gray-800);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  transition: all 0.15s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  width: 100%;
 }
 
 .input-field:focus {
   outline: none;
-  border-color: var(--primary-blue);
-  box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 3px var(--color-accent-primary-light);
 }
 
+.input-field::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+
+/* Alerts - Soft Tint Style */
 .alert {
   padding: 14px 18px;
-  border-radius: 6px;
-  margin-top: 16px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 0.875rem;
   font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .alert-error {
-  background-color: #F8D7DA;
-  border-left: 4px solid var(--error);
-  color: #721C24;
+  background: var(--soft-red-light);
+  color: var(--soft-red);
+  border: 1px solid rgba(220, 38, 38, 0.2);
 }
 
 .alert-success {
-  background-color: #D4EDDA;
-  border-left: 4px solid var(--success);
-  color: #155724;
+  background: var(--emerald-light);
+  color: var(--emerald-green);
+  border: 1px solid rgba(5, 150, 105, 0.2);
 }
 
 .alert-info {
-  background-color: #D1ECF1;
-  border-left: 4px solid var(--info);
-  color: #0C5460;
+  background: var(--ocean-pale);
+  color: var(--primary-blue);
+  border: 1px solid rgba(37, 99, 235, 0.2);
 }
 
-[data-theme="dark"] .alert-error {
-  background-color: rgba(244, 67, 54, 0.2);
-  border-left-color: var(--error);
-  color: #FFCDD2;
+.alert-warning {
+  background: var(--amber-light);
+  color: var(--amber);
+  border: 1px solid rgba(217, 119, 6, 0.2);
 }
 
-[data-theme="dark"] .alert-success {
-  background-color: rgba(76, 175, 80, 0.2);
-  border-left-color: var(--success);
-  color: #C8E6C9;
+/* Status Badges - Soft Tint Style */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
-[data-theme="dark"] .alert-info {
-  background-color: rgba(33, 150, 243, 0.2);
-  border-left-color: var(--info);
-  color: #BBDEFB;
+.badge-success {
+  background: var(--emerald-light);
+  color: var(--emerald-green);
+}
+
+.badge-error {
+  background: var(--soft-red-light);
+  color: var(--soft-red);
+}
+
+.badge-warning {
+  background: var(--amber-light);
+  color: var(--amber);
+}
+
+.badge-info {
+  background: var(--ocean-pale);
+  color: var(--primary-blue);
 }
 
 /* Responsive */
@@ -232,7 +280,7 @@ p {
     padding: 16px;
   }
   
-  h1 { font-size: 1.75rem; }
-  h2 { font-size: 1.5rem; }
-  h3 { font-size: 1.25rem; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.125rem; }
 }

@@ -1,92 +1,70 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  FiDatabase,
-  FiTrendingUp,
-  FiCheckCircle,
   FiAlertCircle,
-  FiSearch,
-  FiDownload
+  FiCheckCircle,
+  FiPackage,
+  FiAlertTriangle,
+  FiSearch
 } from 'react-icons/fi';
+import { useApp } from '../context/AppContext';
+import PartDetails from './PartDetails';
 import './Dashboard.css';
 
-const API_BASE_URL = 'http://localhost:8001';
+// Use Vite proxy in dev (relative `/api`), or configure `VITE_API_BASE_URL` for prod.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
-function Dashboard() {
-  const [partNumber, setPartNumber] = useState('');
-  const [manufacturer, setManufacturer] = useState('');
-  const [eolSpecs, setEolSpecs] = useState([]);
-  const [priorityMap, setPriorityMap] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+function Dashboard({ currentView, searchQuery, onSearch, loading, setLoading, onCompare }) {
+  const { recentParts, user, apiCall } = useApp();
+  const [partData, setPartData] = useState(null);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
-  const statsCards = useMemo(() => ([
+  // Mock alerts data
+  const alerts = [
     {
-      title: 'Specs Loaded',
-      value: eolSpecs.length,
-      helper: eolSpecs.length ? 'Specifications ready' : 'Awaiting lookup',
-      icon: FiDatabase,
-      status: eolSpecs.length ? 'active' : undefined,
+      id: 1,
+      type: 'material',
+      title: '0814788 by PHOENIX CONTACT',
+      subtitle: 'Labeling,Materials',
+      icon: FiPackage
     },
     {
-      title: 'Priorities Set',
-      value: priorityMap.length,
-      helper: priorityMap.length ? 'Ready for export' : 'Pending config',
-      icon: FiTrendingUp,
-      status: priorityMap.length ? 'ready' : undefined,
-    },
-    {
-      title: 'Status',
-      value: priorityMap.length ? 'Ready' : 'Setup Required',
-      helper: 'Configure priorities to export',
-      icon: FiCheckCircle,
-      status: priorityMap.length ? 'complete' : undefined,
-    },
-  ]), [eolSpecs.length, priorityMap.length]);
-
-  const checklistItems = useMemo(() => ([
-    { label: 'Lookup EOL specifications', done: eolSpecs.length > 0 },
-    { label: 'Set FFF priorities', done: priorityMap.length > 0 },
-    { label: 'Download color-coded Excel report', done: false },
-  ]), [eolSpecs.length, priorityMap.length]);
-
-  const handleLookup = async () => {
-    if (!partNumber.trim()) {
-      setError('Please enter a part number');
-      return;
+      id: 2,
+      type: 'obsolescence',
+      title: 'SFH229FA by ams OSRAM',
+      subtitle: 'Obsolescence Notices,Removed from Cost...',
+      icon: FiAlertTriangle
     }
+  ];
 
+  // Fetch part data when searchQuery changes
+  useEffect(() => {
+    if (searchQuery && currentView === 'find-parts') {
+      handleLookup(searchQuery);
+    }
+  }, [searchQuery, currentView]);
+
+  const handleLookup = async (partNumber) => {
     setLoading(true);
     setError(null);
     setSuccessMessage(null);
-    setEolSpecs([]);
-    setPriorityMap([]);
+    setPartData(null);
 
     try {
-      // Build URL with manufacturer if provided
-      let url = `${API_BASE_URL}/api/v1/lookup_eol_specs/${encodeURIComponent(partNumber)}`;
-      if (manufacturer.trim()) {
-        url += `?manufacturer=${encodeURIComponent(manufacturer.trim())}`;
-      }
-
-      const response = await fetch(url);
+      // Use authenticated API helper so the Authorization header is included.
+      const response = await apiCall(`/api/v1/lookup_eol_specs/${encodeURIComponent(partNumber)}`);
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch specs: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Failed to fetch specs: ${response.statusText}`);
       }
 
       const data = await response.json();
-      const specs = data?.specs ?? [];
-      setEolSpecs(Array.isArray(specs) ? specs : []);
-
-      const initialPriorities = (Array.isArray(specs) ? specs : []).map(spec => ({
-        parameter: spec.parameter,
-        priority: 2
-      }));
-      setPriorityMap(initialPriorities);
-      const mfrText = manufacturer.trim() ? ` (${manufacturer.trim()})` : '';
-      setSuccessMessage(`✓ Found ${specs.length} specifications for ${partNumber}${mfrText}`);
+      setPartData(data);
+      
+      const specCount = data.specs?.length || 0;
+      const altCount = data.alternates?.length || 0;
+      setSuccessMessage(`Found ${specCount} specifications, ${altCount} alternate packagings`);
     } catch (err) {
       setError(err.message || 'Failed to fetch part specifications');
     } finally {
@@ -94,304 +72,201 @@ function Dashboard() {
     }
   };
 
-  const handlePriorityChange = (parameter, priority) => {
-    setPriorityMap(prev =>
-      prev.map(item =>
-        item.parameter === parameter
-          ? { ...item, priority: parseInt(priority) }
-          : item
-      )
+  // Render Dashboard Home View
+  if (currentView === 'dashboard') {
+    return (
+      <div className="dashboard-home">
+        <div className="welcome-header">
+          <h1>Welcome back, {user?.name?.split(' ')[0] || 'User'}</h1>
+        </div>
+
+        <div className="dashboard-grid">
+          {/* Recent Section */}
+          <div className="dashboard-card">
+            <div className="card-header-tabs">
+              <h2 className="card-title">Recent</h2>
+              <div className="tabs">
+                <button className="tab tab-active">Parts</button>
+                <button className="tab">BOMs</button>
+              </div>
+            </div>
+            <div className="recent-list">
+              {recentParts.length > 0 ? (
+                recentParts.slice(0, 6).map((part, idx) => (
+                  <div key={idx} className="recent-item" onClick={() => onSearch(part.id)}>
+                    <div className="recent-icon">
+                      <FiPackage size={16} />
+                    </div>
+                    <span className="recent-id">{part.id}</span>
+                    <span className="recent-date">{part.date}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-message">No recent parts. Start by searching!</div>
+              )}
+            </div>
+          </div>
+
+          {/* Alerts Section */}
+          <div className="dashboard-card">
+            <div className="card-header-simple">
+              <h2 className="card-title">Alerts</h2>
+            </div>
+            <div className="alerts-list">
+              {alerts.map((alert) => {
+                const Icon = alert.icon;
+                return (
+                  <div key={alert.id} className="alert-item">
+                    <div className={`alert-icon alert-icon-${alert.type}`}>
+                      <Icon size={20} />
+                    </div>
+                    <div className="alert-content">
+                      <div className="alert-title">{alert.title}</div>
+                      <div className="alert-subtitle">{alert.subtitle}</div>
+                    </div>
+                  </div>
+                );
+              })}
+              <button className="see-all-btn">See All</button>
+            </div>
+          </div>
+
+          {/* Parts Match Status */}
+          <div className="dashboard-card">
+            <div className="card-header-simple">
+              <h2 className="card-title">Parts Match Status</h2>
+            </div>
+            <div className="status-chart">
+              <div className="pie-chart-container">
+                <svg viewBox="0 0 36 36" className="circular-chart">
+                  <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path className="circle circle-green" strokeDasharray="63, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path className="circle circle-red" strokeDasharray="35, 100" strokeDashoffset="-63" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+              </div>
+              <div className="status-legend">
+                <div className="legend-item">
+                  <span className="legend-color" style={{ background: '#10b981' }}></span>
+                  <span>Match [37,611]</span>
+                </div>
+                <div className="legend-item">
+                  <span className="legend-color" style={{ background: '#ef4444' }}></span>
+                  <span>No Match [20,910]</span>
+                </div>
+                <div className="legend-item">
+                  <span className="legend-color" style={{ background: '#6366f1' }}></span>
+                  <span>Ignored [827]</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Site Statistics */}
+        <div className="dashboard-card stats-card">
+          <h2 className="card-title">Site Statistics</h2>
+          <div className="stats-grid">
+            <div className="stat-item">
+              <div className="stat-value">0</div>
+              <div className="stat-label">Site Admin</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-value">59,348</div>
+              <div className="stat-label">Parts in BOMs</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-value">414</div>
+              <div className="stat-label">BOMs</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-value">2</div>
+              <div className="stat-label">Projects</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-value">1</div>
+              <div className="stat-label">Company Admin</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-value">7,821 / 15k</div>
+              <div className="stat-label">Used Parts</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-value">1 / 5</div>
+              <div className="stat-label">Logged-in Users</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-value">65</div>
+              <div className="stat-label">Users</div>
+            </div>
+          </div>
+        </div>
+      </div>
     );
-  };
+  }
 
-  const handleDownloadReport = async () => {
-    if (priorityMap.length === 0) {
-      setError('Please lookup part specifications first');
-      return;
-    }
+  // Render Find Parts View - Using PartDetails component
+  if (currentView === 'find-parts') {
+    return (
+      <div className="find-parts-view">
+        {error && (
+          <div className="alert alert-error">
+            <FiAlertCircle size={20} />
+            <span>{error}</span>
+          </div>
+        )}
 
-    setDownloading(true);
-    setError(null);
-    setSuccessMessage(null);
+        {successMessage && !loading && partData && (
+          <div className="alert alert-success">
+            <FiCheckCircle size={20} />
+            <span>{successMessage}</span>
+          </div>
+        )}
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/download_report`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          eol_part_number: partNumber,
-          ...(manufacturer.trim() && { manufacturer: manufacturer.trim() }),
-          priority_map: priorityMap,
-        }),
-      });
+        {loading && (
+          <div className="loading-state">
+            <div className="lt-logo-loader">
+              <div className="lt-letters">
+                <span className="lt-l">L</span>
+                <span className="lt-ampersand">&</span>
+                <span className="lt-t">T</span>
+              </div>
+              <div className="loading-ring"></div>
+              <div className="loading-ring ring-2"></div>
+              <div className="loading-ring ring-3"></div>
+            </div>
+            <div className="loading-dots">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        )}
 
-      if (!response.ok) {
-        // Try to extract backend error message for better debugging
-        let message = `Report generation failed: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          if (errorData?.detail) {
-            message = `Report generation failed: ${errorData.detail}`;
-          }
-        } catch {
-          // ignore JSON parse errors and keep default message
-        }
-        throw new Error(message);
-      }
+        {!loading && partData && (
+          <PartDetails 
+            partNumber={searchQuery}
+            partData={partData}
+            onClose={() => setPartData(null)}
+            onCompare={onCompare}
+          />
+        )}
 
-      const blob = await response.blob();
-      
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `Color_Coded_FFF_${partNumber}_${new Date().toISOString().slice(0,10)}.xlsx`;
-      
-      document.body.appendChild(a);
-      a.click();
-      
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      setSuccessMessage('✓ Color-coded Excel report downloaded successfully!');
-    } catch (err) {
-      setError(err.message || 'Failed to download report');
-    } finally {
-      setDownloading(false);
-    }
-  };
+        {!loading && !partData && !error && (
+          <div className="empty-state">
+            <div className="empty-icon">
+              <FiSearch size={64} />
+            </div>
+            <h2>Search for Parts</h2>
+            <p>Enter a part number in the search bar above to find product details and alternate packagings from Digi-Key</p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
-  const getPriorityLabel = (priority) => {
-    const labels = {
-      1: 'Must Match',
-      2: 'Can Differ',
-      3: 'Cosmetic'
-    };
-    return labels[priority] || 'Unknown';
-  };
-
-  const getPriorityColor = (priority) => {
-    const colors = {
-      1: '#10b981',  // Priority 1 (Must Match) = Green
-      2: '#f59e0b',  // Priority 2 (Can Differ) = Orange
-      3: '#ef4444'   // Priority 3 (Cosmetic) = Red
-    };
-    return colors[priority] || '#94a3b8';
-  };
-
+  // Placeholder for other views
   return (
-    <div className="dashboard-container">
-      <div className="page-header">
-        <h2>End of Life Part Replacer</h2>
-        <p>Simplified workflow: Lookup → Set Priorities → Download Color-Coded Excel</p>
-      </div>
-
-      <div className="stats-cards">
-        {statsCards.map(({ title, value, helper, icon: Icon, status }, index) => (
-          <div className={`stats-card ${status ? `stats-card-${status}` : ''}`} key={index}>
-            <div className="stats-card-header">
-              <span className="stats-icon">
-                <Icon size={20} />
-              </span>
-              <span>{title}</span>
-            </div>
-            <div className="stats-value">{value}</div>
-            <p className="stats-helper">{helper}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="workflow-grid">
-        <div className="workflow-main">
-
-          {/* Step 1: Lookup */}
-          <div className="card">
-            <div className="card-heading">
-              <h3>1. Lookup Part Specifications</h3>
-              <p className="card-subtitle">Enter EOL part number and manufacturer (optional) to fetch from Octopart</p>
-            </div>
-
-            <div className="input-group">
-              <div className="input-row">
-                <div className="input-field-wrapper">
-                  <label htmlFor="part-number">Part Number *</label>
-                  <input
-                    id="part-number"
-                    type="text"
-                    placeholder="Enter part number (e.g., LM317, MCP73831T)"
-                    value={partNumber}
-                    onChange={(e) => setPartNumber(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
-                    className="input-primary"
-                    disabled={loading}
-                  />
-                </div>
-                <div className="input-field-wrapper">
-                  <label htmlFor="manufacturer">Manufacturer (Optional)</label>
-                  <input
-                    id="manufacturer"
-                    type="text"
-                    placeholder="e.g., Texas Instruments, STMicroelectronics"
-                    value={manufacturer}
-                    onChange={(e) => setManufacturer(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
-                    className="input-primary"
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-              <button
-                onClick={handleLookup}
-                disabled={loading || !partNumber.trim()}
-                className="btn btn-primary btn-lookup"
-              >
-                <FiSearch size={18} />
-                {loading ? 'Searching...' : 'Lookup Specs'}
-              </button>
-            </div>
-          </div>
-
-          {/* Step 2: Set Priorities */}
-          {eolSpecs.length > 0 && (
-            <div className="card">
-              <div className="card-heading">
-                <h3>2. Set Priority for Each Parameter</h3>
-                <p className="card-subtitle">
-                  Priority 1 = Must Match (Critical) | Priority 2 = Can Differ | Priority 3 = Cosmetic
-                </p>
-              </div>
-
-              <div className="table-container-wrapper">
-                <div className="custom-table">
-                  <div className="table-header">
-                    <div className="col-param">Parameter</div>
-                    <div className="col-value">Value</div>
-                    <div className="col-priority">Priority</div>
-                  </div>
-
-                  <div className="table-body-scroll">
-                    {eolSpecs.map((spec, index) => {
-                      const priorityItem = priorityMap.find(p => p.parameter === spec.parameter);
-                      const currentPriority = priorityItem?.priority || 2;
-
-                      return (
-                        <div key={index} className="table-row">
-                          <div className="col-param">{spec.parameter}</div>
-                          <div className="col-value">{spec.value}</div>
-                          <div className="col-priority">
-                            <select
-                              value={currentPriority}
-                              onChange={(e) => handlePriorityChange(spec.parameter, e.target.value)}
-                              className="priority-select"
-                              style={{
-                                borderColor: getPriorityColor(currentPriority),
-                                color: getPriorityColor(currentPriority),
-                                fontWeight: 600
-                              }}
-                            >
-                              <option value={1}>Priority 1: Must Match</option>
-                              <option value={2}>Priority 2: Can Differ</option>
-                              <option value={3}>Priority 3: Cosmetic</option>
-                            </select>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '1.5rem', textAlign: 'right' }}>
-                <button
-                  onClick={handleDownloadReport}
-                  disabled={downloading}
-                  className="btn btn-success btn-large"
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: 'auto' }}
-                >
-                  <FiDownload size={20} />
-                  {downloading ? 'Generating Report...' : 'Download Color-Coded Excel Report'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Success Message */}
-          {successMessage && (
-            <div className="alert alert-success">
-              <FiCheckCircle size={20} />
-              <span>{successMessage}</span>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="alert alert-error">
-              <FiAlertCircle size={20} />
-              <span><strong>Error:</strong> {error}</span>
-            </div>
-          )}
-
-        </div>
-
-        <div className="workflow-side">
-          <div className="card side-card">
-            <h3>Session Status</h3>
-            <ul className="session-metrics">
-              <li>
-                <span>Part Number</span>
-                <strong>{partNumber || '-'}</strong>
-              </li>
-              <li>
-                <span>Manufacturer</span>
-                <strong>{manufacturer || '-'}</strong>
-              </li>
-              <li>
-                <span>Specs Loaded</span>
-                <strong>{eolSpecs.length}</strong>
-              </li>
-              <li>
-                <span>Export Ready</span>
-                <strong>{priorityMap.length > 0 ? 'Yes' : 'No'}</strong>
-              </li>
-            </ul>
-          </div>
-
-          <div className="card side-card">
-            <h3>Workflow Checklist</h3>
-            <ul className="checklist">
-              {checklistItems.map((item, index) => (
-                <li key={index} className={item.done ? 'checklist-done' : ''}>
-                  <span className="checklist-marker">{item.done ? '✓' : index + 1}</span>
-                  <span>{item.label}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="card side-card" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
-            <h3 style={{ color: 'white' }}>Excel Features</h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: '1rem 0 0 0' }}>
-              <li style={{ padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
-                🟨 Yellow headers
-              </li>
-              <li style={{ padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
-                ⬜ Gray attributes
-              </li>
-              <li style={{ padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
-                🟢 Green = Match
-              </li>
-              <li style={{ padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
-                🟠 Orange = Variation
-              </li>
-              <li style={{ padding: '0.5rem 0' }}>
-                🔴 Red = Missing/Critical
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+    <div className="placeholder-view">
+      <h2>{currentView.replace('-', ' ').toUpperCase()}</h2>
+      <p>This section is under development</p>
     </div>
   );
 }

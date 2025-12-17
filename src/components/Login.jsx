@@ -1,107 +1,294 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useApp } from '../context/AppContext';
 import './Login.css';
 
-function Login() {
-  const [username, setUsername] = useState('Harish M');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+function Login({ onLogin }) {
+  const { login, register } = useApp();
+
+  const [isSignup, setIsSignup] = useState(false);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-    if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [navigate]);
+  // Login form state
+  const [loginForm, setLoginForm] = useState({
+    email: '',
+    password: ''
+  });
 
-  const handleSubmit = async (e) => {
+  // Signup form state (simplified for enterprise flow)
+  const [signupForm, setSignupForm] = useState({
+    full_name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
-    // Simulate login (replace with actual authentication)
-    setTimeout(() => {
-      if (username && password) {
-        let displayName = username.trim();
-        if (!displayName) {
-          displayName = 'Harish M';
-        } else if (displayName.toLowerCase() === 'harish') {
-          displayName = 'Harish M';
-        }
+    const result = await login(loginForm.email, loginForm.password);
 
-        // Store auth state (in real app, use proper auth system)
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('username', displayName);
-        navigate('/dashboard');
-      } else {
-        setError('Please enter both username and password');
-      }
-      setLoading(false);
-    }, 500);
+    if (result.success) {
+      onLogin();
+    } else {
+      setError(result.error);
+    }
+
+    setLoading(false);
+  };
+
+  const handleSignupSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!signupForm.full_name.trim()) {
+      setError('Please enter your full name');
+      return;
+    }
+
+    if (signupForm.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (signupForm.password !== signupForm.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+
+    // Derive a reasonable username for the backend
+    const derivedUsername =
+      signupForm.email.split('@')[0] ||
+      signupForm.full_name.trim().replace(/\s+/g, '.').toLowerCase();
+
+    const result = await register({
+      email: signupForm.email,
+      username: derivedUsername,
+      full_name: signupForm.full_name,
+      password: signupForm.password,
+      department: null,
+      phone: null
+    });
+
+    if (result.success) {
+      setSuccess(result.message);
+      setIsSignup(false);
+      setSignupForm({
+        full_name: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+      });
+    } else {
+      setError(result.error);
+    }
+
+    setLoading(false);
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-logo">
-          <div className="logo-badge">
-            <img src="/LT.png" alt="L&T Logo" className="login-logo-img" />
+    <div className="login-page">
+      <div className="login-container">
+        {/* Left side - Branding */}
+        <div className="login-branding">
+          <div className="brand-content">
+            <div className="logo-badge">
+              <img src="/LT.png" alt="L&T Logo" />
+            </div>
+            <h1 className="brand-title">L&T CORe</h1>
+            <p className="brand-subtitle">Component Obsolescence & Resilience Engine</p>
+            <div className="brand-features">
+              <div className="feature-item">
+                <span>Real-time component lifecycle tracking</span>
+              </div>
+              <div className="feature-item">
+                <span>Alternate part recommendations</span>
+              </div>
+              <div className="feature-item">
+                <span>Compliance and risk management</span>
+              </div>
+              <div className="feature-item">
+                <span>Detailed comparison reports</span>
+              </div>
+            </div>
           </div>
-          <h1>L&T-CORe</h1>
-          <p className="login-subtitle">Component Obsolescence & Resilience Engine</p>
-          <p className="login-description">
-            An intelligent system that automates FFF analysis to prevent costly line-down situations 
-            and redesigns by managing End-of-Life component risks.
-          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
-              required
-              autoFocus
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          {error && (
-            <div className="login-error">
-              {error}
+        {/* Right side - Form */}
+        <div className="login-form-section">
+          <div className="form-container">
+            <div className="form-header">
+              <h2>{isSignup ? 'Request Access' : 'Welcome Back'}</h2>
+              <p>
+                {isSignup
+                  ? 'Create your CORe account and wait for admin approval.'
+                  : 'Sign in to continue to CORe'}
+              </p>
             </div>
-          )}
 
-          <button 
-            type="submit" 
-            className="login-button"
-            disabled={loading}
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
+            {error && (
+              <div className="alert alert-error">
+                <span>{error}</span>
+              </div>
+            )}
 
-          <div className="login-footer-text">
-            <p>Demo credentials are pre-filled for Harish M.</p>
+            {success && (
+              <div className="alert alert-success">
+                <span>{success}</span>
+              </div>
+            )}
+
+            {!isSignup ? (
+              <>
+                {/* Login Form */}
+                <form onSubmit={handleLoginSubmit} className="auth-form">
+                  <div className="form-group">
+                    <label>Email Address</label>
+                    <input
+                      type="email"
+                      className="input-field"
+                      placeholder="you@company.com"
+                      value={loginForm.email}
+                      onChange={(e) =>
+                        setLoginForm({ ...loginForm, email: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Password</label>
+                    <input
+                      type="password"
+                      className="input-field"
+                      placeholder="Enter your password"
+                      value={loginForm.password}
+                      onChange={(e) =>
+                        setLoginForm({ ...loginForm, password: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <button type="submit" className="submit-btn" disabled={loading}>
+                    {loading ? 'Signing in…' : 'Sign In'}
+                  </button>
+                </form>
+
+                <div className="form-footer">
+                  <p>
+                    Don&apos;t have an account?{' '}
+                    <button
+                      type="button"
+                      className="link-button"
+                      onClick={() => {
+                        setIsSignup(true);
+                        setError('');
+                        setSuccess('');
+                      }}
+                    >
+                      Request access
+                    </button>
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Signup / Request Access Form */}
+                <form onSubmit={handleSignupSubmit} className="auth-form">
+                  <div className="form-group">
+                    <label>Full Name</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="Jane Doe"
+                      value={signupForm.full_name}
+                      onChange={(e) =>
+                        setSignupForm({ ...signupForm, full_name: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Work Email</label>
+                    <input
+                      type="email"
+                      className="input-field"
+                      placeholder="you@company.com"
+                      value={signupForm.email}
+                      onChange={(e) =>
+                        setSignupForm({ ...signupForm, email: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Password</label>
+                    <input
+                      type="password"
+                      className="input-field"
+                      placeholder="Min. 6 characters"
+                      value={signupForm.password}
+                      onChange={(e) =>
+                        setSignupForm({ ...signupForm, password: e.target.value })
+                      }
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Confirm Password</label>
+                    <input
+                      type="password"
+                      className="input-field"
+                      placeholder="Re-enter password"
+                      value={signupForm.confirmPassword}
+                      onChange={(e) =>
+                        setSignupForm({
+                          ...signupForm,
+                          confirmPassword: e.target.value
+                        })
+                      }
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <button type="submit" className="submit-btn" disabled={loading}>
+                    {loading ? 'Submitting…' : 'Submit Request'}
+                  </button>
+                </form>
+
+                <div className="form-footer">
+                  <p>
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      className="link-button"
+                      onClick={() => {
+                        setIsSignup(false);
+                        setError('');
+                        setSuccess('');
+                      }}
+                    >
+                      Back to sign in
+                    </button>
+                  </p>
+                </div>
+              </>
+            )}
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

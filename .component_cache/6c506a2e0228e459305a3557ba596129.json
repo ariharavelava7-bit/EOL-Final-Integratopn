@@ -1,0 +1,486 @@
+{
+  "timestamp": "2025-12-05T12:35:36.368893",
+  "part_number": "MFR-25FRF52-10K",
+  "data": [
+    {
+      "mpn": "MFR-25FRF52-10K",
+      "manufacturer": {
+        "name": "Yageo Group"
+      },
+      "category": {
+        "name": "Through-Hole Resistors"
+      },
+      "shortDescription": "Metal Film Resistors \u2013 Through-Hole; YAGEO; MFR-25FRF52-10K; 10 kOhm; 1 %; Axial; Axial",
+      "specs": [
+        {
+          "attribute": {
+            "name": "Case/Package"
+          },
+          "displayValue": "Axial"
+        },
+        {
+          "attribute": {
+            "name": "Composition"
+          },
+          "displayValue": "Metal Film"
+        },
+        {
+          "attribute": {
+            "name": "Lead Diameter"
+          },
+          "displayValue": "600 \u00b5m"
+        },
+        {
+          "attribute": {
+            "name": "Lead Free"
+          },
+          "displayValue": "Lead Free"
+        },
+        {
+          "attribute": {
+            "name": "Length"
+          },
+          "displayValue": "6.2992 mm"
+        },
+        {
+          "attribute": {
+            "name": "Max Operating Temperature"
+          },
+          "displayValue": "155 \u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Max Power Dissipation"
+          },
+          "displayValue": "250 mW"
+        },
+        {
+          "attribute": {
+            "name": "Min Operating Temperature"
+          },
+          "displayValue": "-55 \u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Number of Terminations"
+          },
+          "displayValue": "2"
+        },
+        {
+          "attribute": {
+            "name": "Power Rating"
+          },
+          "displayValue": "250 mW"
+        },
+        {
+          "attribute": {
+            "name": "Resistance"
+          },
+          "displayValue": "10 k\u03a9"
+        },
+        {
+          "attribute": {
+            "name": "RoHS"
+          },
+          "displayValue": "Compliant"
+        },
+        {
+          "attribute": {
+            "name": "Schedule B"
+          },
+          "displayValue": "8533210090, 8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|8533210090|85"
+        },
+        {
+          "attribute": {
+            "name": "Temperature Coefficient"
+          },
+          "displayValue": "100 ppm/\u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Termination"
+          },
+          "displayValue": "Axial"
+        },
+        {
+          "attribute": {
+            "name": "Tolerance"
+          },
+          "displayValue": "1 %"
+        },
+        {
+          "attribute": {
+            "name": "Voltage Rating"
+          },
+          "displayValue": "250 V"
+        },
+        {
+          "attribute": {
+            "name": "Voltage Rating (DC)"
+          },
+          "displayValue": "200 V"
+        },
+        {
+          "attribute": {
+            "name": "Width"
+          },
+          "displayValue": "6.3 mm"
+        }
+      ]
+    },
+    {
+      "mpn": "MFR-25FRF52-10K2",
+      "manufacturer": {
+        "name": "Yageo Group"
+      },
+      "category": {
+        "name": "Through-Hole Resistors"
+      },
+      "shortDescription": "General Type Metal Film Resistor 10.2kOhm 1/4W 1% Axial T/R",
+      "specs": [
+        {
+          "attribute": {
+            "name": "Case/Package"
+          },
+          "displayValue": "Axial"
+        },
+        {
+          "attribute": {
+            "name": "Composition"
+          },
+          "displayValue": "Metal Film"
+        },
+        {
+          "attribute": {
+            "name": "Lead Free"
+          },
+          "displayValue": "Lead Free"
+        },
+        {
+          "attribute": {
+            "name": "Length"
+          },
+          "displayValue": "6.2992 mm"
+        },
+        {
+          "attribute": {
+            "name": "Max Operating Temperature"
+          },
+          "displayValue": "155 \u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Max Power Dissipation"
+          },
+          "displayValue": "250 mW"
+        },
+        {
+          "attribute": {
+            "name": "Min Operating Temperature"
+          },
+          "displayValue": "-55 \u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Number of Terminations"
+          },
+          "displayValue": "2"
+        },
+        {
+          "attribute": {
+            "name": "Packaging"
+          },
+          "displayValue": "Tape and Reel"
+        },
+        {
+          "attribute": {
+            "name": "Power Rating"
+          },
+          "displayValue": "250 mW"
+        },
+        {
+          "attribute": {
+            "name": "Resistance"
+          },
+          "displayValue": "10.2 k\u03a9"
+        },
+        {
+          "attribute": {
+            "name": "RoHS"
+          },
+          "displayValue": "Compliant"
+        },
+        {
+          "attribute": {
+            "name": "Schedule B"
+          },
+          "displayValue": "8533210090, 8533210090|8533210090, 8533210090|8533210090|8533210090, 8533210090|8533210090|8533210090|8533210090"
+        },
+        {
+          "attribute": {
+            "name": "Temperature Coefficient"
+          },
+          "displayValue": "100 ppm/\u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Termination"
+          },
+          "displayValue": "Axial"
+        },
+        {
+          "attribute": {
+            "name": "Tolerance"
+          },
+          "displayValue": "1 %"
+        },
+        {
+          "attribute": {
+            "name": "Voltage Rating"
+          },
+          "displayValue": "250 V"
+        },
+        {
+          "attribute": {
+            "name": "Voltage Rating (DC)"
+          },
+          "displayValue": "200 V"
+        }
+      ]
+    },
+    {
+      "mpn": "MFR-25FRF52-10K7",
+      "manufacturer": {
+        "name": "Yageo Group"
+      },
+      "category": {
+        "name": "Through-Hole Resistors"
+      },
+      "shortDescription": "General Type Metal Film Resistor 10.7kOhm 1/4W 1% Axial T/R",
+      "specs": [
+        {
+          "attribute": {
+            "name": "Case/Package"
+          },
+          "displayValue": "Axial"
+        },
+        {
+          "attribute": {
+            "name": "Composition"
+          },
+          "displayValue": "Metal Film"
+        },
+        {
+          "attribute": {
+            "name": "Lead Free"
+          },
+          "displayValue": "Lead Free"
+        },
+        {
+          "attribute": {
+            "name": "Length"
+          },
+          "displayValue": "6.2992 mm"
+        },
+        {
+          "attribute": {
+            "name": "Max Operating Temperature"
+          },
+          "displayValue": "155 \u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Max Power Dissipation"
+          },
+          "displayValue": "250 mW"
+        },
+        {
+          "attribute": {
+            "name": "Min Operating Temperature"
+          },
+          "displayValue": "-55 \u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Number of Terminations"
+          },
+          "displayValue": "2"
+        },
+        {
+          "attribute": {
+            "name": "Packaging"
+          },
+          "displayValue": "Tape and Reel"
+        },
+        {
+          "attribute": {
+            "name": "Power Rating"
+          },
+          "displayValue": "250 mW"
+        },
+        {
+          "attribute": {
+            "name": "Resistance"
+          },
+          "displayValue": "10.7 k\u03a9"
+        },
+        {
+          "attribute": {
+            "name": "RoHS"
+          },
+          "displayValue": "Compliant"
+        },
+        {
+          "attribute": {
+            "name": "Schedule B"
+          },
+          "displayValue": "8533210090, 8533210090|8533210090|8533210090|8533210090|8533210090"
+        },
+        {
+          "attribute": {
+            "name": "Temperature Coefficient"
+          },
+          "displayValue": "100 ppm/\u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Termination"
+          },
+          "displayValue": "Axial"
+        },
+        {
+          "attribute": {
+            "name": "Tolerance"
+          },
+          "displayValue": "1 %"
+        },
+        {
+          "attribute": {
+            "name": "Voltage Rating"
+          },
+          "displayValue": "250 V"
+        },
+        {
+          "attribute": {
+            "name": "Voltage Rating (DC)"
+          },
+          "displayValue": "200 V"
+        }
+      ]
+    },
+    {
+      "mpn": "MFR-25FRF52-10K5",
+      "manufacturer": {
+        "name": "Yageo Group"
+      },
+      "category": {
+        "name": "Through-Hole Resistors"
+      },
+      "shortDescription": "General Type Metal Film Resistor 10.5kOhm 1/4W 1% Axial T/R",
+      "specs": [
+        {
+          "attribute": {
+            "name": "Case/Package"
+          },
+          "displayValue": "Axial"
+        },
+        {
+          "attribute": {
+            "name": "Composition"
+          },
+          "displayValue": "Metal Film"
+        },
+        {
+          "attribute": {
+            "name": "Lead Free"
+          },
+          "displayValue": "Lead Free"
+        },
+        {
+          "attribute": {
+            "name": "Length"
+          },
+          "displayValue": "6.2992 mm"
+        },
+        {
+          "attribute": {
+            "name": "Max Operating Temperature"
+          },
+          "displayValue": "155 \u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Max Power Dissipation"
+          },
+          "displayValue": "250 mW"
+        },
+        {
+          "attribute": {
+            "name": "Min Operating Temperature"
+          },
+          "displayValue": "-55 \u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Number of Terminations"
+          },
+          "displayValue": "2"
+        },
+        {
+          "attribute": {
+            "name": "Packaging"
+          },
+          "displayValue": "Tape and Reel"
+        },
+        {
+          "attribute": {
+            "name": "Power Rating"
+          },
+          "displayValue": "250 mW"
+        },
+        {
+          "attribute": {
+            "name": "Resistance"
+          },
+          "displayValue": "10.5 k\u03a9"
+        },
+        {
+          "attribute": {
+            "name": "RoHS"
+          },
+          "displayValue": "Compliant"
+        },
+        {
+          "attribute": {
+            "name": "Temperature Coefficient"
+          },
+          "displayValue": "100 ppm/\u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Termination"
+          },
+          "displayValue": "Axial"
+        },
+        {
+          "attribute": {
+            "name": "Tolerance"
+          },
+          "displayValue": "1 %"
+        },
+        {
+          "attribute": {
+            "name": "Voltage Rating"
+          },
+          "displayValue": "200 V"
+        },
+        {
+          "attribute": {
+            "name": "Voltage Rating (DC)"
+          },
+          "displayValue": "200 V"
+        }
+      ]
+    }
+  ]
+}

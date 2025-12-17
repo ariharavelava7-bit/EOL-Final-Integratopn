@@ -1,0 +1,89 @@
+{
+  "timestamp": "2025-12-05T16:33:14.275965",
+  "part_number": "CY7C53150-20AI",
+  "data": [
+    {
+      "mpn": "CY7C53150-20AI",
+      "manufacturer": {
+        "name": "Infineon"
+      },
+      "category": {
+        "name": "System on Chip (SoC)"
+      },
+      "shortDescription": "Mpu CY7C531X0 Cisc 16 Bit 0.35UM 20MHZ 64-PIN TQFP",
+      "specs": [
+        {
+          "attribute": {
+            "name": "Case/Package"
+          },
+          "displayValue": "TQFP"
+        },
+        {
+          "attribute": {
+            "name": "Frequency"
+          },
+          "displayValue": "20 MHz"
+        },
+        {
+          "attribute": {
+            "name": "Max Operating Temperature"
+          },
+          "displayValue": "85 \u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Max Supply Voltage"
+          },
+          "displayValue": "5.5 V"
+        },
+        {
+          "attribute": {
+            "name": "Min Operating Temperature"
+          },
+          "displayValue": "-40 \u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Min Supply Voltage"
+          },
+          "displayValue": "4.5 V"
+        },
+        {
+          "attribute": {
+            "name": "Mount"
+          },
+          "displayValue": "Surface Mount"
+        },
+        {
+          "attribute": {
+            "name": "Number of Pins"
+          },
+          "displayValue": "64"
+        },
+        {
+          "attribute": {
+            "name": "Operating Supply Voltage"
+          },
+          "displayValue": "5 V"
+        },
+        {
+          "attribute": {
+            "name": "RoHS"
+          },
+          "displayValue": "Non-Compliant"
+        }
+      ]
+    },
+    {
+      "mpn": "CY7C53150-20AIT",
+      "manufacturer": {
+        "name": "Infineon"
+      },
+      "category": {
+        "name": "System on Chip (SoC)"
+      },
+      "shortDescription": "",
+      "specs": []
+    }
+  ]
+}

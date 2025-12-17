@@ -1,126 +1,187 @@
 import React, { useState, useEffect } from 'react';
-import './History.css';
+import { useApp } from '../context/AppContext';
+import { FiClock, FiSearch, FiFileText, FiDownload, FiTrash2, FiRefreshCw } from 'react-icons/fi';
+import './Pages.css';
+
+// Use Vite proxy in dev (relative `/api`), or configure `VITE_API_BASE_URL` for prod.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 function History() {
-  const [history, setHistory] = useState([]);
+  const { token } = useApp();
+  const [activeTab, setActiveTab] = useState('searches');
+  const [searchHistory, setSearchHistory] = useState([]);
+  const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    // Simulate loading history
-    setTimeout(() => {
-      const mockHistory = [
-        {
-          id: 1,
-          partNumber: 'EE-SX4070',
-          action: 'Analysis Completed',
-          timestamp: '2025-11-10 23:27:12',
-          status: 'success',
-          details: 'Generated Excel report with 3 recommendations'
-        },
-        {
-          id: 2,
-          partNumber: 'MCP73831T',
-          action: 'Analysis Completed',
-          timestamp: '2025-11-10 23:22:54',
-          status: 'success',
-          details: 'Generated Excel report with 4 recommendations'
-        },
-        {
-          id: 3,
-          partNumber: 'C2472A',
-          action: 'Lookup Failed',
-          timestamp: '2025-11-09 14:30:22',
-          status: 'error',
-          details: 'Part number not found in database'
-        },
-        {
-          id: 4,
-          partNumber: 'LM358',
-          action: 'Analysis Started',
-          timestamp: '2025-11-08 10:15:33',
-          status: 'pending',
-          details: 'Analysis in progress...'
-        }
-      ];
-      setHistory(mockHistory);
-      setLoading(false);
-    }, 500);
+    loadData();
   }, []);
 
-  const filteredHistory = filter === 'all' 
-    ? history 
-    : history.filter(item => item.status === filter);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // Load search history
+      const historyRes = await fetch(`${API_BASE_URL}/api/search-history?limit=50`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (historyRes.ok) {
+        const data = await historyRes.json();
+        setSearchHistory(data);
+      }
+
+      // Load reports
+      const reportsRes = await fetch(`${API_BASE_URL}/api/reports`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (reportsRes.ok) {
+        const data = await reportsRes.json();
+        setReports(data);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+    setLoading(false);
+  };
+
+  const filteredHistory = searchHistory.filter(item =>
+    item.part_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.manufacturer && item.manufacturer.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const filteredReports = reports.filter(item =>
+    item.report_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.part_number && item.part_number.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   return (
-    <div className="history-page">
+    <div className="page-container history-page">
       <div className="page-header">
-        <h2>Analysis History</h2>
-        <p>View your analysis activity and history</p>
+        <div className="page-title-section">
+          <h1>
+            <FiClock className="page-icon" />
+            History
+          </h1>
+          <p>View your search history and generated reports</p>
+        </div>
+        <button className="refresh-btn" onClick={loadData} disabled={loading}>
+          <FiRefreshCw className={loading ? 'spin' : ''} size={16} />
+          Refresh
+        </button>
       </div>
 
-      <div className="card filters-card">
-        <div className="filters">
-          <button 
-            className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-            onClick={() => setFilter('all')}
-          >
-            All
-          </button>
-          <button 
-            className={`filter-btn ${filter === 'success' ? 'active' : ''}`}
-            onClick={() => setFilter('success')}
-          >
-            Success
-          </button>
-          <button 
-            className={`filter-btn ${filter === 'error' ? 'active' : ''}`}
-            onClick={() => setFilter('error')}
-          >
-            Errors
-          </button>
-          <button 
-            className={`filter-btn ${filter === 'pending' ? 'active' : ''}`}
-            onClick={() => setFilter('pending')}
-          >
-            Pending
-          </button>
-        </div>
+      {/* Tabs */}
+      <div className="page-tabs">
+        <button
+          className={`tab-btn ${activeTab === 'searches' ? 'active' : ''}`}
+          onClick={() => setActiveTab('searches')}
+        >
+          <FiSearch size={16} />
+          Search History ({searchHistory.length})
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
+          onClick={() => setActiveTab('reports')}
+        >
+          <FiFileText size={16} />
+          Reports ({reports.length})
+        </button>
       </div>
 
-      {loading ? (
-        <div className="card">
-          <p>Loading history...</p>
-        </div>
-      ) : (
-        <div className="card">
+      {/* Search bar */}
+      <div className="page-search">
+        <FiSearch size={18} />
+        <input
+          type="text"
+          placeholder={`Search ${activeTab === 'searches' ? 'history' : 'reports'}...`}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="page-content">
+        {loading ? (
+          <div className="loading-state">
+            <FiRefreshCw className="spin" size={32} />
+            <p>Loading...</p>
+          </div>
+        ) : activeTab === 'searches' ? (
           <div className="history-list">
             {filteredHistory.length === 0 ? (
               <div className="empty-state">
-                <p>No history found for selected filter.</p>
+                <FiSearch size={48} />
+                <h3>No search history</h3>
+                <p>Your part searches will appear here</p>
               </div>
             ) : (
-              filteredHistory.map((item) => (
-                <div key={item.id} className={`history-item history-${item.status}`}>
-                  <div className="history-icon">
-                    {item.status === 'success' && '✓'}
-                    {item.status === 'error' && '✗'}
-                    {item.status === 'pending' && '○'}
-                  </div>
-                  <div className="history-content">
-                    <div className="history-header">
-                      <span className="history-part">{item.partNumber}</span>
-                      <span className="history-time">{new Date(item.timestamp).toLocaleString()}</span>
-                    </div>
-                    <div className="history-action">{item.action}</div>
-                    <div className="history-details">{item.details}</div>
-                  </div>
-                </div>
-              ))
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Part Number</th>
+                    <th>Manufacturer</th>
+                    <th>Description</th>
+                    <th>Alternates Found</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredHistory.map((item) => (
+                    <tr key={item.id}>
+                      <td className="part-number">{item.part_number}</td>
+                      <td>{item.manufacturer || '-'}</td>
+                      <td className="description-cell">{item.description || '-'}</td>
+                      <td>{item.alternates_count}</td>
+                      <td>{new Date(item.searched_at).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="reports-list">
+            {filteredReports.length === 0 ? (
+              <div className="empty-state">
+                <FiFileText size={48} />
+                <h3>No reports generated</h3>
+                <p>Your generated reports will appear here</p>
+              </div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Report Name</th>
+                    <th>Type</th>
+                    <th>Part Number</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredReports.map((item) => (
+                    <tr key={item.id}>
+                      <td className="report-name">{item.report_name}</td>
+                      <td>
+                        <span className={`type-badge ${item.report_type}`}>
+                          {item.report_type}
+                        </span>
+                      </td>
+                      <td className="part-number">{item.part_number || '-'}</td>
+                      <td>{new Date(item.created_at).toLocaleString()}</td>
+                      <td className="actions-cell">
+                        <button className="action-btn download" title="Download">
+                          <FiDownload size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

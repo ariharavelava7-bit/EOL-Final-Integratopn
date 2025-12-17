@@ -1,0 +1,124 @@
+{
+  "timestamp": "2025-12-05T16:35:34.255385",
+  "part_number": "XC2S30-5 VQ100C",
+  "data": [
+    {
+      "mpn": "XC2S30-5VQ100C",
+      "manufacturer": {
+        "name": "AMD"
+      },
+      "category": {
+        "name": "FPGAs - Field Programmable Gate Arrays"
+      },
+      "shortDescription": "FPGA Spartan-II Family 30K Gates 972 Cells 263MHz 0.18um Technology 2.5V 100-Pin VTQFP",
+      "specs": [
+        {
+          "attribute": {
+            "name": "Case/Package"
+          },
+          "displayValue": "TQFP"
+        },
+        {
+          "attribute": {
+            "name": "Lead Free"
+          },
+          "displayValue": "Contains Lead"
+        },
+        {
+          "attribute": {
+            "name": "Max Operating Temperature"
+          },
+          "displayValue": "85 \u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Min Operating Temperature"
+          },
+          "displayValue": "0 \u00b0C"
+        },
+        {
+          "attribute": {
+            "name": "Mount"
+          },
+          "displayValue": "Surface Mount"
+        },
+        {
+          "attribute": {
+            "name": "Number of Gates"
+          },
+          "displayValue": "30000"
+        },
+        {
+          "attribute": {
+            "name": "Number of I/Os"
+          },
+          "displayValue": "60"
+        },
+        {
+          "attribute": {
+            "name": "Number of Logic Blocks (LABs)"
+          },
+          "displayValue": "216"
+        },
+        {
+          "attribute": {
+            "name": "Number of Logic Elements/Cells"
+          },
+          "displayValue": "972"
+        },
+        {
+          "attribute": {
+            "name": "Number of Pins"
+          },
+          "displayValue": "100"
+        },
+        {
+          "attribute": {
+            "name": "Operating Supply Voltage"
+          },
+          "displayValue": "2.5 V"
+        },
+        {
+          "attribute": {
+            "name": "Packaging"
+          },
+          "displayValue": "Bulk"
+        },
+        {
+          "attribute": {
+            "name": "RAM Size"
+          },
+          "displayValue": "3 kB"
+        },
+        {
+          "attribute": {
+            "name": "RoHS"
+          },
+          "displayValue": "Non-Compliant"
+        },
+        {
+          "attribute": {
+            "name": "Speed Grade"
+          },
+          "displayValue": "5"
+        }
+      ]
+    },
+    {
+      "mpn": "XC2S30-5VQ100CES",
+      "manufacturer": {
+        "name": "Xilinx"
+      },
+      "category": null,
+      "shortDescription": "",
+      "specs": [
+        {
+          "attribute": {
+            "name": "RoHS"
+          },
+          "displayValue": "Non-Compliant"
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 @echo off
-echo Starting FFF Validation Engine Backend...
+echo Starting L^&T CORe Backend...
 
 REM Check if venv already exists
 if exist "venv\Scripts\activate.bat" (
@@ -15,9 +15,10 @@ if exist "venv\Scripts\activate.bat" (
 
 echo.
 echo Starting FastAPI server...
-echo Backend will be available at http://localhost:8000
-echo API docs will be available at http://localhost:8000/docs
+echo Backend will be available at http://localhost:8001
+echo API docs will be available at http://localhost:8001/docs
 echo.
-python app.py
+REM Run via `python -m uvicorn` so it always uses the venv-installed uvicorn
+python -m uvicorn app:app --host 0.0.0.0 --port 8001
 pause
 

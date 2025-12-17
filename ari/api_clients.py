@@ -261,16 +261,23 @@ class OctopartClient:
         return formatted
 
 class DigiKeyClient:
-    """Digi-Key API client"""
+    """Digi-Key API client with automatic token refresh"""
     
     def __init__(self, client_id, client_secret):
         self.client_id = client_id
         self.client_secret = client_secret
         self.access_token = None
+        self.token_expiry = None
         self.base_url = "https://api.digikey.com"
         
-    def authenticate(self):
-        """Get OAuth2 access token"""
+    def authenticate(self, force=False):
+        """Get OAuth2 access token. Force re-auth if needed."""
+        # If we have a valid token and not forcing, return True
+        if not force and self.access_token and self.token_expiry:
+            if datetime.now() < self.token_expiry:
+                return True
+        
+        print("[Digi-Key] Authenticating...")
         token_url = "https://api.digikey.com/v1/oauth2/token"
         
         data = {
@@ -285,30 +292,57 @@ class DigiKeyClient:
             if response.status_code == 200:
                 result = response.json()
                 self.access_token = result.get("access_token")
+                # Token typically expires in 1 hour, set expiry to 55 minutes to be safe
+                expires_in = result.get("expires_in", 3600)
+                self.token_expiry = datetime.now() + timedelta(seconds=expires_in - 300)
+                print("[Digi-Key] Authentication successful!")
                 return True
             else:
-                print(f"Digi-Key auth failed: {response.status_code}")
+                print(f"[Digi-Key] Auth failed: {response.status_code}")
+                print(f"Response: {response.text}")
+                self.access_token = None
+                self.token_expiry = None
                 return False
                 
         except Exception as e:
-            print(f"Digi-Key auth error: {e}")
+            print(f"[Digi-Key] Auth error: {e}")
+            self.access_token = None
+            self.token_expiry = None
             return False
     
-    def search_part(self, part_number):
-        """Search for a single part"""
+    def _make_request(self, method, url, **kwargs):
+        """Make a request with automatic token refresh on 401"""
+        # Ensure we have a token
         if not self.access_token:
             if not self.authenticate():
                 return None
         
-        print(f"Digi-Key: Searching for '{part_number}'...")
-        
-        url = f"{self.base_url}/products/v4/search/keyword"
-        
-        headers = {
+        headers = kwargs.pop('headers', {})
+        headers.update({
             "Authorization": f"Bearer {self.access_token}",
             "X-DIGIKEY-Client-Id": self.client_id,
-            "Content-Type": "application/json"
-        }
+        })
+        
+        # First attempt
+        response = requests.request(method, url, headers=headers, verify=False, **kwargs)
+        
+        # If 401, re-authenticate and retry once
+        if response.status_code == 401:
+            print("[Digi-Key] Token expired, refreshing...")
+            if self.authenticate(force=True):
+                headers["Authorization"] = f"Bearer {self.access_token}"
+                response = requests.request(method, url, headers=headers, verify=False, **kwargs)
+            else:
+                print("[Digi-Key] Failed to refresh token")
+                return None
+        
+        return response
+    
+    def search_part(self, part_number):
+        """Search for a single part"""
+        print(f"[Digi-Key] Searching for '{part_number}'...")
+        
+        url = f"{self.base_url}/products/v4/search/keyword"
         
         payload = {
             "Keywords": part_number,
@@ -317,20 +351,88 @@ class DigiKeyClient:
         }
         
         try:
-            response = requests.post(url, json=payload, headers=headers, verify=False)
+            response = self._make_request(
+                'POST', 
+                url, 
+                json=payload,
+                headers={"Content-Type": "application/json"}
+            )
             
-            if response.status_code == 200:
+            if response and response.status_code == 200:
                 data = response.json()
                 products = data.get('Products', [])
                 
                 if products:
+                    print(f"[Digi-Key] Found product!")
                     return self._format_digikey_data(products[0])
+                else:
+                    print(f"[Digi-Key] No products found for '{part_number}'")
+            elif response:
+                print(f"[Digi-Key] Search error: {response.status_code}")
+                print(f"Response: {response.text[:300]}")
                     
             return None
             
         except Exception as e:
-            print(f"Digi-Key error: {e}")
+            print(f"[Digi-Key] Search error: {e}")
             return None
+
+    def get_alternate_packaging(self, product_number, limit=5):
+        """
+        Get alternate packagings for a given product from Digi-Key.
+        Handles token refresh automatically.
+        """
+        print(f"[Digi-Key] Getting alternate packaging for '{product_number}'...")
+
+        url = f"{self.base_url}/products/v4/search/{product_number}/alternatepackaging"
+
+        try:
+            response = self._make_request(
+                'GET', 
+                url,
+                headers={"accept": "application/json"}
+            )
+
+            if not response:
+                print("[Digi-Key] No response received")
+                return []
+
+            if response.status_code != 200:
+                print(f"[Digi-Key] Alternate packaging error: {response.status_code}")
+                print(f"Response: {response.text[:300]}")
+                return []
+
+            data = response.json()
+            alt_root = data.get("AlternatePackagings", {})
+            alt_list = alt_root.get("AlternatePackaging", []) or []
+
+            recommendations = []
+            for alt in alt_list[:limit]:
+                rec = {
+                    "Source": "Digi-Key",
+                    "ProductUrl": alt.get("ProductUrl", ""),
+                    "Description": alt.get("Description", ""),
+                    "ManufacturerPartNumber": alt.get("ManufacturerProductNumber", ""),
+                    "UnitPrice": alt.get("UnitPrice", ""),
+                    "QuantityAvailable": alt.get("QuantityAvailable", ""),
+                    "DigiKeyProductNumber": alt.get("DigiKeyProductNumber", ""),
+                }
+
+                mfr = alt.get("Manufacturer") or {}
+                if isinstance(mfr, dict):
+                    rec["Manufacturer"] = mfr.get("Name", "")
+                    rec["ManufacturerId"] = mfr.get("Id", "")
+                else:
+                    rec["Manufacturer"] = str(mfr)
+
+                recommendations.append(rec)
+
+            print(f"[Digi-Key] Found {len(recommendations)} alternate packagings")
+            return recommendations
+
+        except Exception as e:
+            print(f"[Digi-Key] Alternate packaging error: {e}")
+            return []
     
     def _format_digikey_data(self, product):
         """Format Digi-Key response"""
@@ -357,9 +459,12 @@ class DigiKeyClient:
             formatted[f"SPEC_{param_name}"] = param_value
         
         formatted['QuantityAvailable'] = product.get('QuantityAvailable', 'N/A')
+        formatted['UnitPrice'] = product.get('UnitPrice', 'N/A')
+        formatted['ProductUrl'] = product.get('ProductUrl', 'N/A')
+        formatted['DigiKeyPartNumber'] = product.get('DigiKeyPartNumber', 'N/A')
         formatted['_source'] = 'Digi-Key'
         
-        print(f"Digi-Key: Found {len(parameters)} specifications")
+        print(f"[Digi-Key] Found {len(parameters)} specifications")
         
         return formatted
 

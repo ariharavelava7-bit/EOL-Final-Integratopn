@@ -1,66 +1,78 @@
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  FiLayout, 
+  FiGrid, 
   FiSearch, 
-  FiFileText, 
+  FiFolder, 
   FiClock, 
-  FiSettings, 
+  FiSettings,
   FiLogOut,
-  FiUser
+  FiChevronLeft,
+  FiChevronRight,
+  FiShield
 } from 'react-icons/fi';
+import { useApp } from '../context/AppContext';
 import './Sidebar.css';
 
-function Sidebar({ isOpen, onClose }) {
-  const location = useLocation();
-  const navigate = useNavigate();
+function Sidebar({ currentView, onViewChange, isAdmin }) {
+  const { sidebarCollapsed, toggleSidebar, logout } = useApp();
 
   const menuItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: FiLayout },
-    { path: '/analysis', label: 'Part Analysis', icon: FiSearch },
-    { path: '/reports', label: 'Reports', icon: FiFileText },
-    { path: '/history', label: 'History', icon: FiClock },
-    { path: '/settings', label: 'Settings', icon: FiSettings },
+    { id: 'dashboard', label: 'Dashboard', icon: FiGrid },
+    { id: 'find-parts', label: 'Find Parts', icon: FiSearch },
+    { id: 'boms', label: 'BOMs/Projects', icon: FiFolder },
+    { id: 'history', label: 'History', icon: FiClock },
+    { id: 'settings', label: 'Settings', icon: FiSettings },
   ];
 
+  // Add admin link for admin users
+  if (isAdmin) {
+    menuItems.push({ id: 'admin', label: 'Admin Panel', icon: FiShield, isAdmin: true });
+  }
+
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('username');
-    navigate('/login');
+    logout();
+    onViewChange('logout');
   };
 
   return (
-    <>
-      {isOpen && <div className="sidebar-overlay" onClick={onClose}></div>}
-      <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-        <nav className="sidebar-nav">
-          <ul className="sidebar-menu">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <li key={item.path} className="sidebar-item">
-                  <Link
-                    to={item.path}
-                    className={`sidebar-link ${location.pathname === item.path ? 'active' : ''}`}
-                    onClick={onClose}
-                  >
-                    <Icon className="sidebar-icon" size={18} />
-                    <span className="sidebar-label">{item.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+    <aside className={`app-sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <nav className="sidebar-nav">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              className={`sidebar-item ${currentView === item.id ? 'sidebar-item-active' : ''} ${item.isAdmin ? 'admin-item' : ''}`}
+              onClick={() => onViewChange(item.id)}
+              title={sidebarCollapsed ? item.label : undefined}
+            >
+              <Icon size={20} className="sidebar-icon" />
+              {!sidebarCollapsed && <span className="sidebar-label">{item.label}</span>}
+            </button>
+          );
+        })}
+      </nav>
 
-        <div className="sidebar-footer">
-          <button className="logout-button" onClick={handleLogout}>
-            <FiLogOut className="sidebar-icon" size={18} />
-            <span className="sidebar-label">Logout</span>
-          </button>
-        </div>
-      </aside>
-    </>
+      <div className="sidebar-footer">
+        <button 
+          className="sidebar-item sidebar-logout"
+          onClick={handleLogout}
+          title={sidebarCollapsed ? 'Logout' : undefined}
+        >
+          <FiLogOut size={20} className="sidebar-icon" />
+          {!sidebarCollapsed && <span className="sidebar-label">Logout</span>}
+        </button>
+        
+        <button 
+          className="sidebar-collapse-btn"
+          onClick={toggleSidebar}
+          title={sidebarCollapsed ? 'Expand' : 'Collapse'}
+        >
+          {sidebarCollapsed ? <FiChevronRight size={18} /> : <FiChevronLeft size={18} />}
+          {!sidebarCollapsed && <span className="sidebar-label">Collapse</span>}
+        </button>
+      </div>
+    </aside>
   );
 }
 
